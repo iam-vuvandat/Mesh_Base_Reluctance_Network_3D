@@ -1,0 +1,2 @@
+04/12/2025 11:55:56 PM : Created file: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\MBGRN3D_v0.0.1\storage\models\axial_flux_15_slot_10_pole - Copy\MessageLogs\messageLog_1500.txt
+04/12/2025 11:55:56 PM : Loaded file: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\MBGRN3D_v0.0.1\storage\models\axial_flux_15_slot_10_pole - Copy.mot

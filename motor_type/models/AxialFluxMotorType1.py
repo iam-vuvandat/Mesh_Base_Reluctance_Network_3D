@@ -1,5 +1,5 @@
-from motor_type.utils.for_axial_flux_motor_type_1 import find_symmetry_factor, find_winding_matrix
-
+from motor_type.utils.for_axial_flux_motor_type_1.find_symmetry_factor import find_symmetry_factor
+from motor_type.utils.for_axial_flux_motor_type_1.find_winding_matrix import find_winding_matrix
 
 # Init Axial Flux Motor : single stator, single rotor, parallel slot, surface mount magnet, surface radial
 class AxialFluxMotorType1:
@@ -88,4 +88,4 @@ class AxialFluxMotorType1:
         self.symmetry_factor = symmetry_data.symmetry_factor
 
         winding_data = find_winding_matrix(self)
-        winding_matrix = winding_data.winding_matrix
+        self.winding_matrix = winding_data.winding_matrix

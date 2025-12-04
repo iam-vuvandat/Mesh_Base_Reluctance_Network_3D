@@ -13,8 +13,9 @@ def install_library():
         'numpy': 'numpy',
         'matplotlib': 'matplotlib',
         'shapely': 'shapely',
-        'trimesh': 'trimesh',  # 3D geometry library
-        'pyglet': 'pyglet',    # <-- BỔ SUNG: Thư viện GUI để trimesh hiển thị cửa sổ 3D
+        'trimesh': 'trimesh',
+        'pyglet': 'pyglet<2',       # GUI backend for trimesh (Bắt buộc phiên bản cũ < 2.0)
+        'manifold3d': 'manifold3d', # Boolean backend (Để tính giao/hợp vật thể)
         'pympler': 'pympler',
         'scipy': 'scipy',
         'tqdm': 'tqdm',
@@ -52,5 +53,5 @@ def install_library():
     
     return installed_modules
 
-# Chạy hàm cài đặt
-install_library()
+if __name__ == "__main__":
+    install_library()

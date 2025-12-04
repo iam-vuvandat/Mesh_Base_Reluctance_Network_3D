@@ -1,2 +1,4 @@
 04-12-25: Khởi tạo dự án mạng từ trở 3 chiều sinh từ lưới, kế thừa phương pháp 2D đã thực hiện
           Tạo cấu trúc thư mục, push lên Github
+
+05-12-25: Giới hạn phạm vi của dự án: chỉ áp dụng cho lưới hình thang cân trong hệ tọa độ trụ
