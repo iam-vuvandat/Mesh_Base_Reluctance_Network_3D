@@ -30,5 +30,12 @@ class AxialFluxMotor_type1:
                  magnet_length = 2, 
                  rotor_length = 10,
                  # winding  
+                 phase = 3,
+                 turns = 50,
+                 throw = 1,
+                 parallel_path = 1,
+                 winding_layer = 2,
+                 winding_type = "concentrated",
+                 winding_matrix = None,
                  ):
-        pass
+        
