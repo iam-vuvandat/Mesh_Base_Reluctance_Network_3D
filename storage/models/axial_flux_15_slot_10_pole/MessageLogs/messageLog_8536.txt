@@ -1,0 +1,54 @@
+04/12/2025 4:47:53 PM : Created file: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\MessageLogs\messageLog_8536.txt
+04/12/2025 4:47:53 PM : Loaded file: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole.mot
+04/12/2025 4:47:59 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\FEResultsData\
+04/12/2025 4:47:59 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\FEResultsData\feasys\
+04/12/2025 4:47:59 PM : Status: Solving FEA model
+04/12/2025 4:47:59 PM : Q axis current only Point Calculation
+04/12/2025 4:48:00 PM : Solving FEA model
+04/12/2025 4:48:09 PM : Load Point Calculation
+04/12/2025 4:48:09 PM : Solving FEA model
+04/12/2025 4:48:19 PM : Solving FEA model
+04/12/2025 4:48:28 PM : Solving FEA model
+04/12/2025 4:48:36 PM : Transient Torque Calculation
+04/12/2025 4:48:37 PM : Solving FEA model
+04/12/2025 4:51:49 PM : FEA Calculation Time: 229 Seconds
+04/12/2025 4:51:49 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\FEResultsData\feasys\
+04/12/2025 4:51:50 PM : Warning: Operating point outside voltage limit. Check the DC bus voltage.
+04/12/2025 4:51:50 PM : Solving completed
+04/12/2025 4:51:50 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\Emag\
+04/12/2025 4:52:00 PM : Nodes count = 5459
+04/12/2025 4:52:00 PM : Elements count = 10541
+04/12/2025 4:52:01 PM : Status: Solving Completed
+04/12/2025 4:54:56 PM : Status: Solving FEA model
+04/12/2025 4:54:56 PM : Q axis current only Point Calculation
+04/12/2025 4:54:56 PM : Solving FEA model
+04/12/2025 4:55:04 PM : Load Point Calculation
+04/12/2025 4:55:04 PM : Solving FEA model
+04/12/2025 4:55:12 PM : Solving FEA model
+04/12/2025 4:55:19 PM : Solving FEA model
+04/12/2025 4:55:28 PM : Transient Torque Calculation
+04/12/2025 4:55:28 PM : Solving FEA model
+04/12/2025 4:58:09 PM : FEA Calculation Time: 192 Seconds
+04/12/2025 4:58:09 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\FEResultsData\feasys\
+04/12/2025 4:58:10 PM : Warning: Operating point outside voltage limit. Check the DC bus voltage.
+04/12/2025 4:58:10 PM : Solving completed
+04/12/2025 4:58:21 PM : Nodes count = 4928
+04/12/2025 4:58:21 PM : Elements count = 9497
+04/12/2025 4:58:21 PM : Status: Solving Completed
+04/12/2025 4:59:54 PM : Status: Solving FEA model
+04/12/2025 4:59:54 PM : Q axis current only Point Calculation
+04/12/2025 4:59:54 PM : Solving FEA model
+04/12/2025 5:00:02 PM : Load Point Calculation
+04/12/2025 5:00:02 PM : Solving FEA model
+04/12/2025 5:00:11 PM : Solving FEA model
+04/12/2025 5:00:19 PM : Solving FEA model
+04/12/2025 5:00:29 PM : Transient Torque Calculation
+04/12/2025 5:00:29 PM : Solving FEA model
+04/12/2025 5:03:35 PM : FEA Calculation Time: 221 Seconds
+04/12/2025 5:03:36 PM : Creating folder: H:\My Drive\Mesh_Base_Reluctance_Netwwork_3D\python\storage\models\axial_flux_15_slot_10_pole\FEResultsData\feasys\
+04/12/2025 5:03:38 PM : Warning: Operating point outside voltage limit. Check the DC bus voltage.
+04/12/2025 5:03:38 PM : Solving completed
+04/12/2025 5:03:53 PM : Nodes count = 5442
+04/12/2025 5:03:53 PM : Elements count = 10505
+04/12/2025 5:03:53 PM : Status: Solving Completed
+04/12/2025 5:12:02 PM : Value 50] is not valid. Value will be reset.

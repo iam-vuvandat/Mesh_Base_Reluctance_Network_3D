@@ -1,0 +1,1 @@
+04-12-25: Khởi tạo dự án mạng từ trở 3 chiều sinh từ lưới, kế thừa phương pháp 2D đã thực hiện
