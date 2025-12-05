@@ -1,0 +1,3 @@
+05/12/2025 10:24:58 AM : Created file: C:\Users\Surface\Documents\GitHub\MBGRN3D_v0.0.1\storage\models\axial_flux_15_slot_10_pole\MessageLogs\messageLog_2164.txt
+05/12/2025 10:24:58 AM : Loaded file: C:\Users\Surface\Documents\GitHub\MBGRN3D_v0.0.1\storage\models\axial_flux_15_slot_10_pole.mot
+05/12/2025 10:58:02 AM : Data has been edited.Do you want to save the file before closing? = No

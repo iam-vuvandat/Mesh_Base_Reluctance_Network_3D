@@ -1,5 +1,9 @@
 from motor_type.utils.for_axial_flux_motor_type_1.find_symmetry_factor import find_symmetry_factor
 from motor_type.utils.for_axial_flux_motor_type_1.find_winding_matrix import find_winding_matrix
+from material.models.MaterialDataBase import MaterialDataBase
+from motor_type.utils.for_axial_flux_motor_type_1.create_geometry import create_geometry
+import math
+pi = math.pi
 
 # Init Axial Flux Motor : single stator, single rotor, parallel slot, surface mount magnet, surface radial
 class AxialFluxMotorType1:
@@ -14,8 +18,8 @@ class AxialFluxMotorType1:
                  # radial_rotor_parameter
                  pole_number = 10,
                  rotor_lam_dia = 150 * 1e-3,
+                 magnet_arc = 140,
                  magnet_embed_depth = 5 * 1e-3, 
-                 rotor_web_thickness = 5 * 1e-3, 
                  magnet_depth = 40 * 1e-3,
                  magnet_segments = 1,
                  banding_depth = 0 * 1e-3,
@@ -40,6 +44,10 @@ class AxialFluxMotorType1:
                  winding_layer = 2,
                  winding_type = "concentrated",
                  winding_matrix = None,
+                 # Material
+                 air = "default",
+                 magnet_type = "N30UH",
+                 iron_type = "M350-50A"
                  ):
         
         # --- Gán Radial Stator Parameters ---
@@ -53,8 +61,8 @@ class AxialFluxMotorType1:
         # --- Gán Radial Rotor Parameters ---
         self.pole_number = pole_number
         self.rotor_lam_dia = rotor_lam_dia
+        self.magnet_arc = magnet_arc
         self.magnet_embed_depth = magnet_embed_depth
-        self.rotor_web_thickness = rotor_web_thickness
         self.magnet_depth = magnet_depth
         self.magnet_segments = magnet_segments
         self.banding_depth = banding_depth
@@ -83,9 +91,23 @@ class AxialFluxMotorType1:
         self.winding_type = winding_type
         self.winding_matrix = winding_matrix
 
-        
+        # Hệ số tuần hoàn 
         symmetry_data = find_symmetry_factor(self)
         self.symmetry_factor = symmetry_data.symmetry_factor
 
+        # Ma trận dây quấn
         winding_data = find_winding_matrix(self)
         self.winding_matrix = winding_data.winding_matrix
+
+        # Vật liệu 
+        self.material_database = MaterialDataBase(air=air,
+                                                  magnet_type= magnet_type,
+                                                  iron_type= iron_type)
+        self.geometry = None
+
+    def create_geometry(self,
+                        rotor_angle_offset = 0,
+                        stator_angle_offset = 0):
+        self.geometry = create_geometry(motor=self,
+                                        rotor_angle_offset=rotor_angle_offset,
+                                        stator_angle_offset=stator_angle_offset)
