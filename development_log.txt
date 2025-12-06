@@ -1,8 +1,13 @@
 04-12-25:
-    Khởi tạo dự án mạng từ trở 3 chiều sinh từ lưới, kế thừa phương pháp 2D đã thực hiện
+Khởi tạo dự án mạng từ trở 3 chiều sinh từ lưới, kế thừa phương pháp 2D đã thực hiện
 Tạo cấu trúc thư mục, push lên Github
 
-05-12-25: 
-    Giới hạn phạm vi của dự án: chỉ áp dụng cho lưới hình thang cân trong hệ tọa độ trụ
-    Hoàn thành thư mục xử lý vật liệu /material
+05-12-25:
+Giới hạn phạm vi của dự án: chỉ áp dụng cho lưới hình thang cân trong hệ tọa độ trụ
+Hoàn thành thư mục xử lý vật liệu /material
     
+06-12-25: 
+Bổ sung thư mục vẽ hình, tiếp tục vẽ geometry động cơ dọc trục
+
+07-12-25:
+Hoàn thành geometry của động cơ dọc trục, chuyển sang tạo class Mesh
