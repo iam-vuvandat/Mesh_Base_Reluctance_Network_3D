@@ -2,6 +2,7 @@ from motor_type.utils.for_axial_flux_motor_type_1.find_symmetry_factor import fi
 from motor_type.utils.for_axial_flux_motor_type_1.find_winding_matrix import find_winding_matrix
 from material.models.MaterialDataBase import MaterialDataBase
 from motor_type.utils.for_axial_flux_motor_type_1.create_geometry import create_geometry
+from motor_type.utils.for_axial_flux_motor_type_1.create_adaptive_mesh import create_adaptive_mesh
 import math
 pi = math.pi
 
@@ -104,6 +105,7 @@ class AxialFluxMotorType1:
                                                   magnet_type= magnet_type,
                                                   iron_type= iron_type)
         self.geometry = None
+        self.mesh     = None
 
     def create_geometry(self,
                         rotor_angle_offset = 0,
@@ -120,3 +122,43 @@ class AxialFluxMotorType1:
                                         create_magnet=create_magnet,
                                         create_tooth=create_tooth,
                                         create_stator_yoke=create_stator_yoke)
+
+    def create_adaptive_mesh(self,
+                             n_r=10,
+                             n_theta=150,
+                             n_z_in_air=2,
+                             n_z_rotor_yoke=2,
+                             n_z_magnet=2,
+                             n_z_airgap=3,
+                             n_z_tooth_tip_1=1,
+                             n_z_tooth_tip_2=3,
+                             n_z_tooth_body=3,
+                             n_z_stator_yoke=2,
+                             n_z_out_air=2,
+                             use_symmetry_factor=True,
+                             periodic_boundary=True):
+        """
+        Tạo lưới thích ứng (Adaptive Mesh) cho động cơ.
+        Các tham số đầu vào sẽ ghi đè lên giá trị mặc định.
+        """
+        # Gọi hàm tạo lưới và truyền đúng các biến số vào (không hardcode số)
+        self.mesh = create_adaptive_mesh(
+            motor=self,
+            n_r=n_r,
+            n_theta=n_theta,
+            n_z_in_air=n_z_in_air,
+            n_z_rotor_yoke=n_z_rotor_yoke,
+            n_z_magnet=n_z_magnet,
+            n_z_airgap=n_z_airgap,
+            n_z_tooth_tip_1=n_z_tooth_tip_1,
+            n_z_tooth_tip_2=n_z_tooth_tip_2,
+            n_z_tooth_body=n_z_tooth_body,
+            n_z_stator_yoke=n_z_stator_yoke,
+            n_z_out_air=n_z_out_air,
+            use_symmetry_factor=use_symmetry_factor,
+            periodic_boundary=periodic_boundary
+        )
+        
+        return self.mesh
+    
+    

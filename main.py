@@ -6,4 +6,5 @@ aft.create_geometry(create_rotor_yoke = True,
                     create_stator_yoke = True,
                     create_tooth = True)
 aft.geometry.show()
-
+aft.create_adaptive_mesh()
+aft.mesh.show()

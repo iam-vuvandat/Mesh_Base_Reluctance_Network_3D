@@ -152,3 +152,5 @@ class Geometry:
         
         plotter.view_isometric()
         plotter.show()
+
+        

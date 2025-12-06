@@ -157,7 +157,7 @@ def create_geometry(motor,
     # create stator yoke
     stator_yoke_mesh = create_tube(inner_radius=motor.stator_bore_dia / 2,
                                    outer_radius=motor.stator_lam_dia /2,
-                                   height = motor.stator_length,
+                                   height = motor.stator_length - motor.tooth_tip_depth - motor.slot_depth,
                                    z_offset=z_offset_4)
     if create_stator_yoke == True:
         geometry.append(Segment(mesh = stator_yoke_mesh,
