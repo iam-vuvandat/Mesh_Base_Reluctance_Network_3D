@@ -53,5 +53,7 @@ def install_library():
     
     return installed_modules
 
+install_library()
+
 if __name__ == "__main__":
     install_library()

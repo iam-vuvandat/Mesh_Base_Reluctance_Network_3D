@@ -23,9 +23,10 @@ def find_symmetry_factor(motor):
                   slot_reduced= slot_reduced,
                   pole_reduced= pole_reduced)
 
-def test():
-    a = 14
-    b = 7
-    a,b,k = simplify_fraction(a=a,b=b)
-    print(a,b,k)
-test()
+if __name__ == "__main__":
+    def test():
+        a = 14
+        b = 7
+        a,b,k = simplify_fraction(a=a,b=b)
+        print(a,b,k)
+    test()

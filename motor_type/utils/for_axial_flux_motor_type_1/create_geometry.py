@@ -8,6 +8,10 @@ pi = math.pi
 from motor_type.utils.for_create_geometry.create_cylinder import create_cylinder
 from motor_type.utils.for_create_geometry.create_tube import create_tube
 from motor_type.utils.for_create_geometry.create_cylindrical_shell_segment import create_cylindrical_shell_segment
+from motor_type.utils.for_create_geometry.create_smart_poligon import create_smart_polygon
+from motor_type.utils.for_create_geometry.extrude_polygon_between_z import extrude_polygon_between_z
+from motor_type.utils.for_create_geometry.create_arc import create_arc
+from motor_type.utils.for_create_geometry.rotate_mesh_z import rotate_mesh_z
 from core_class.models.Segment import Segment
 from core_class.models.Geometry import Geometry
 
@@ -18,6 +22,7 @@ def create_geometry(motor,
                     stator_angle_offset = 0): #rad
     
     geometry = []
+    
     # create_rotor_yoke
     rotor_yoke_mesh = create_tube(inner_radius=motor.shaft_hole_diameter/2,
                                   outer_radius=motor.rotor_lam_dia/2,
@@ -27,7 +32,7 @@ def create_geometry(motor,
                                   material = "iron",
                                   magnet_source= 0.0,
                                   )
-    geometry.append(rotor_yoke_template)
+    #geometry.append(rotor_yoke_template)
 
     #create_magnet
     pole_number = motor.pole_number
@@ -58,10 +63,46 @@ def create_geometry(motor,
                                   material= "magnet",
                                   magnet_source= magnet_source,
                                   magnetization_direction=np.array([0,0,sign]))
-        geometry.append(magnet_template)
+        #geometry.append(magnet_template)
     
-    # Create tooth tip
-    slot_arc = 2*pi / motor.slot_number
-    
+    # create tooth tip 
+    # component 1:
+    z_tooth_tip_1 = motor.rotor_length + motor.magnet_length + motor.airgap
+    z_tooth_tip_2 = z_tooth_tip_1 + motor.tooth_tip_depth
+    w1 = ((motor.slot_width - motor.slot_opening)/2)
+    h1 = w1 * np.tan(motor.tooth_tip_angle * pi / 180)
+    z_tooth_tip_3 = z_tooth_tip_2 + h1
 
+    C_in = motor.shaft_hole_diameter * pi
+    C_in_per_slot = C_in / motor.slot_number
+    C_in_1 = C_in_per_slot - motor.slot_opening
+    angle_in_1 = 2*np.atan(C_in_1/motor.shaft_hole_diameter)
+
+    arc_in_1 = create_arc(motor.shaft_hole_diameter/2,
+                          start_rad= stator_angle_offset - angle_in_1/2,
+                          end_rad=stator_angle_offset + angle_in_1/2)
+    
+    C_out = motor.stator_lam_dia * pi
+    C_out_per_slot = C_out / motor.slot_number
+    C_out_1 = C_out_per_slot - motor.slot_opening
+    angle_out_1 = 2* np.atan(C_out_1 / motor.stator_lam_dia)
+    arc_out_1 = create_arc(radius=  motor.stator_lam_dia/2,
+                           start_rad= stator_angle_offset - angle_out_1/2,
+                           end_rad= stator_angle_offset + angle_out_1/2)
+    
+    polygon1 = create_smart_polygon(arc1= arc_in_1,
+                                    arc2= arc_out_1)
+    
+    mesh_1 = extrude_polygon_between_z(polygon = polygon1,
+                                       z1=z_tooth_tip_1,
+                                       z2=z_tooth_tip_2)
+    
+    for i in range(int(motor.slot_number)):
+        mesh_rotated = rotate_mesh_z(mesh_1, i * 2* pi / motor.slot_number)
+        tooth_tip_rotated = Segment(mesh=mesh_rotated,
+                                    material="iron")
+        geometry.append(tooth_tip_rotated)
+
+    # component 2 
+    
     return Geometry(geometry=geometry)
