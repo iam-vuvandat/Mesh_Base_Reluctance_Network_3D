@@ -6,3 +6,4 @@ Tạo cấu trúc thư mục, push lên Github
     Giới hạn phạm vi của dự án: chỉ áp dụng cho lưới hình thang cân trong hệ tọa độ trụ
     Hoàn thành thư mục xử lý vật liệu /material
     
+06-12-25: Bổ sung thư mục vẽ hình, tiếp tục vẽ geometry động cơ dọc trục
