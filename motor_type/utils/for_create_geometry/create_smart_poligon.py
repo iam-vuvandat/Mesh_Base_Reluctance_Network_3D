@@ -59,7 +59,7 @@ def create_smart_polygon(arc1, arc2):
     dist_to_end   = np.linalg.norm(end1 - end2)
 
     if dist_to_end < dist_to_start:
-        print(">> [INFO] Đảo chiều Arc 2 để khép vòng Polygon.")
+        #print(">> [INFO] Đảo chiều Arc 2 để khép vòng Polygon.")
         arc2 = arc2[::-1]
     
     # 4. Tạo Polygon

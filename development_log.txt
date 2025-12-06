@@ -10,4 +10,5 @@ Hoàn thành thư mục xử lý vật liệu /material
 Bổ sung thư mục vẽ hình, tiếp tục vẽ geometry động cơ dọc trục
 
 07-12-25:
+Tối ưu Gometry.show() : Plot bằng pyvista : mượt và đẹp hơn 
 Hoàn thành geometry của động cơ dọc trục, chuyển sang tạo class Mesh

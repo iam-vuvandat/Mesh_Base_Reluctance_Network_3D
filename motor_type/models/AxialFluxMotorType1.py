@@ -107,7 +107,16 @@ class AxialFluxMotorType1:
 
     def create_geometry(self,
                         rotor_angle_offset = 0,
-                        stator_angle_offset = 0):
+                        stator_angle_offset = 0,
+                        create_rotor_yoke = True,
+                        create_magnet = True,
+                        create_tooth = True,
+                        create_stator_yoke = True):
+        
         self.geometry = create_geometry(motor=self,
                                         rotor_angle_offset=rotor_angle_offset,
-                                        stator_angle_offset=stator_angle_offset)
+                                        stator_angle_offset=stator_angle_offset,
+                                        create_rotor_yoke=create_rotor_yoke,
+                                        create_magnet=create_magnet,
+                                        create_tooth=create_tooth,
+                                        create_stator_yoke=create_stator_yoke)

@@ -1,5 +1,4 @@
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import pyvista as pv
 import numpy as np
 
 class Geometry:
@@ -7,153 +6,149 @@ class Geometry:
         self.geometry = geometry if geometry is not None else []
 
     def show(self, 
-             iron_color=(0.7, 0.7, 0.7, 0.5),    # Light gray for dark mode
-             magnet_color=(1.0, 0.3, 0.3, 0.8),  # Bright red
-             coil_color=(0.9, 0.5, 0.2, 0.6),    # Bright copper
-             air_color=(0.8, 0.9, 1.0, 0.1),     # Faint blue
-             default_color=(0.2, 0.6, 1.0, 0.5), 
-             linewidth=0.05):                    
+             iron_color="#A0A0A0",    
+             magnet_color="#FF3333",  
+             coil_color="#FF8C00",    
+             air_color="#CCEEFF",     
+             default_color="#3498DB"): 
         """
-        Displays 3D Interactive Plot in Modern Dark Mode (English UI).
+        Hiển thị 3D với bề mặt siêu mịn (Smooth Shading) và đầy đủ thông tin chi tiết.
         """
         if not self.geometry:
-            print("Geometry is empty.")
+            print("Geometry is empty. Nothing to show.")
             return
 
-        # --- MODERN STYLE: DARK BACKGROUND ---
-        # Sử dụng context manager để chỉ áp dụng dark mode cho biểu đồ này
-        with plt.style.context('dark_background'):
-            
-            fig = plt.figure(figsize=(14, 10))
-            ax = fig.add_subplot(111, projection='3d')
-            
-            # Tùy chỉnh giao diện trục cho hiện đại hơn
-            ax.grid(color='gray', linestyle=':', linewidth=0.5, alpha=0.5)
-            ax.xaxis.pane.fill = False
-            ax.yaxis.pane.fill = False
-            ax.zaxis.pane.fill = False
-            
-            artist_to_segment = {}
-            all_min, all_max = [], []
+        # --- 1. SETUP GIAO DIỆN ---
+        pv.set_plot_theme("dark")
+        plotter = pv.Plotter(window_size=[1200, 900])
+        plotter.set_background("#0F0F0F") 
+        plotter.add_axes()
+        
+        # --- 2. XỬ LÝ DỮ LIỆU & VẼ MESH ---
+        print("Rendering high-quality geometry...")
+        
+        for segment in self.geometry:
+            mesh_data = segment.mesh
+            if mesh_data is None: continue
 
-            # --- Rendering Loop ---
-            for segment in self.geometry:
-                mesh = segment.mesh
-                if mesh is None: continue
-
-                polygons = mesh.vertices[mesh.faces]
+            try:
+                # Wrap trimesh object
+                pv_mesh = pv.wrap(mesh_data)
                 
-                # Determine Color
-                mat = str(segment.material).lower()
-                if "iron" in mat or "steel" in mat: color = iron_color
-                elif "magnet" in mat: color = magnet_color
-                elif "copper" in mat or "coil" in mat or "winding" in mat: color = coil_color
-                elif "air" in mat: color = air_color
-                else: color = default_color
-
-                # Edge color should be white/light in dark mode if linewidth > 0
-                edge_color = 'white' if linewidth > 0 else 'none'
-                edge_alpha = 0.3 if linewidth > 0 else 0
-
-                # Create Collection
-                mesh_collection = Poly3DCollection(
-                    polygons, 
-                    alpha=color[3], 
-                    linewidths=linewidth, 
-                    edgecolor=edge_color
-                )
-                mesh_collection.set_facecolor(color[:3])
-                if linewidth > 0:
-                    mesh_collection.set_edgecolor((1, 1, 1, edge_alpha))
+                # --- FIX LỖI KHÔNG TRƠN (SMOOTHING FIX) ---
+                # Bước 1: Clean để gộp các điểm trùng nhau (quan trọng để shading hoạt động)
+                pv_mesh = pv_mesh.clean()
                 
-                # Enable Interaction
-                mesh_collection.set_picker(True) 
-                
-                ax.add_collection3d(mesh_collection)
-                artist_to_segment[mesh_collection] = segment
-                
-                all_min.append(mesh.bounds[0])
-                all_max.append(mesh.bounds[1])
+                # Bước 2: Tính toán lại vector pháp tuyến tại các điểm (Point Normals)
+                # split_vertices=True và feature_angle giúp giữ cạnh sắc ở góc vuông 
+                # nhưng làm mềm ở bề mặt cong.
+                pv_mesh = pv_mesh.compute_normals(point_normals=True, 
+                                                  cell_normals=False, 
+                                                  split_vertices=True, 
+                                                  feature_angle=30.0, 
+                                                  inplace=True)
+            except Exception as e:
+                print(f"Error processing mesh: {e}")
+                continue
 
-            # --- HUD (Heads-Up Display) Info Box ---
-            # Style: Dark semi-transparent box with white monospace text
-            initial_text = "INTERACTIVE MODE\nClick on a segment\nto view details."
+            # --- CẤU HÌNH VẬT LIỆU ---
+            mat = str(segment.material).lower()
             
-            info_text = fig.text(
-                0.02, 0.90, initial_text, 
-                fontsize=10, 
-                color='white',
-                verticalalignment='top', 
-                family='monospace', # Font kiểu máy đánh chữ cho thẳng hàng
-                bbox=dict(
-                    boxstyle='round,pad=0.8', 
-                    facecolor='#222222', # Dark gray background
-                    edgecolor='gray',
-                    alpha=0.85
-                )
-            )
+            # Default settings
+            color = default_color
+            opacity = 1.0; pbr = True; metallic = 0.5; roughness = 0.5
 
-            # --- Helper: Format Vector ---
+            if "iron" in mat or "steel" in mat: 
+                color = iron_color
+                metallic = 0.8; roughness = 0.3 # Kim loại bóng
+            elif "magnet" in mat: 
+                color = magnet_color
+                metallic = 0.2; roughness = 0.6
+            elif "copper" in mat or "coil" in mat: 
+                color = coil_color
+                metallic = 0.9; roughness = 0.2 # Đồng rất bóng
+            elif "air" in mat: 
+                color = air_color
+                opacity = 0.05; pbr = False
+
+            # --- TẠO INFO STRING ĐẦY ĐỦ ---
+            # Helper để format vector gọn gàng
             def fmt_vec(v):
-                if isinstance(v, (np.ndarray, list, tuple)):
-                    return f"[{v[0]:5.2f}, {v[1]:5.2f}, {v[2]:5.2f}]"
-                return str(v)
+                if v is None: return "None"
+                try: return f"[{v[0]:.2f}, {v[1]:.2f}, {v[2]:.2f}]"
+                except: return str(v)
 
-            # --- Event Handler ---
-            def on_pick(event):
-                artist = event.artist
-                if artist in artist_to_segment:
-                    seg = artist_to_segment[artist]
-                    
-                    # Formatting Output (Aligned Columns)
-                    lines = [f"== SEGMENT DETAILS =="]
-                    lines.append(f"{'Material':<10}: {seg.material}")
-                    
-                    lines.append(f"\n[MAGNETIC PROPERTIES]")
-                    lines.append(f"{'Source':<10}: {seg.magnet_source:.4f} T")
-                    lines.append(f"{'Direction':<10}: {fmt_vec(seg.magnetization_direction)}")
-                    
-                    lines.append(f"\n[WINDING CONFIG]")
-                    lines.append(f"{'Vector':<10}: {fmt_vec(seg.winding_vector)}")
-                    lines.append(f"{'Normal':<10}: {fmt_vec(seg.winding_normal)}")
-                    
-                    lines.append(f"\n[GEOMETRY / DIMENSIONS]")
-                    lines.append(f"{'Radial':<10}: {seg.radial_length:.4f} mm")
-                    lines.append(f"{'Axial':<10}: {seg.axial_length:.4f} mm")
-                    lines.append(f"{'Angular':<10}: {seg.angular_length:.4f} rad")
+            def fmt_val(v):
+                if v is None: return "None"
+                try: return f"{v:.4f}"
+                except: return str(v)
 
-                    full_text = "\n".join(lines)
-                    
-                    # Update HUD
-                    info_text.set_text(full_text)
-                    
-                    # Print to Console (Clean Log)
-                    print(f"\n--- PICK EVENT DETECTED ---")
-                    print(full_text)
-                    
-                    fig.canvas.draw_idle()
-
-            fig.canvas.mpl_connect('pick_event', on_pick)
-
-            # --- Auto Scaling ---
-            if all_min and all_max:
-                global_min = np.min(all_min, axis=0)
-                global_max = np.max(all_max, axis=0)
-                max_range = (global_max - global_min).max() / 2.0
-                mid = (global_max + global_min) * 0.5
-                ax.set_xlim(mid[0] - max_range, mid[0] + max_range)
-                ax.set_ylim(mid[1] - max_range, mid[1] + max_range)
-                ax.set_zlim(mid[2] - max_range, mid[2] + max_range)
-
-            # Modern Axis Labels
-            ax.set_xlabel('X Axis (mm)', color='white')
-            ax.set_ylabel('Y Axis (mm)', color='white')
-            ax.set_zlabel('Z Axis (mm)', color='white')
-            ax.set_title(f"3D MOTOR ASSEMBLY VIEW ({len(self.geometry)} Segments)", color='white', pad=20)
+            # Thu thập tất cả thuộc tính
+            lines = []
+            lines.append(f"Material      : {segment.material}")
             
-            # Remove gray background of the pane for cleaner look
-            ax.xaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
-            ax.yaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
-            ax.zaxis.set_pane_color((0.0, 0.0, 0.0, 0.0))
+            # Chỉ hiển thị nếu giá trị tồn tại (khác None hoặc khác 0 tùy ngữ cảnh)
+            if hasattr(segment, 'magnet_source'):
+                lines.append(f"Mag Source    : {fmt_val(segment.magnet_source)}")
+            
+            if hasattr(segment, 'magnetization_direction'):
+                lines.append(f"Mag Direction : {fmt_vec(segment.magnetization_direction)}")
+            
+            if hasattr(segment, 'winding_vector'):
+                lines.append(f"Winding Vec   : {fmt_vec(segment.winding_vector)}")
+                
+            if hasattr(segment, 'winding_normal'):
+                lines.append(f"Winding Norm  : {fmt_vec(segment.winding_normal)}")
+                
+            if hasattr(segment, 'angular_length'):
+                lines.append(f"Angular Len   : {fmt_val(segment.angular_length)}")
+                
+            if hasattr(segment, 'radial_length'):
+                lines.append(f"Radial Len    : {fmt_val(segment.radial_length)}")
+                
+            if hasattr(segment, 'axial_length'):
+                lines.append(f"Axial Len     : {fmt_val(segment.axial_length)}")
 
-            plt.show()
+            full_info = "\n".join(lines)
+            pv_mesh.field_data["info"] = [full_info]
+
+            # --- VẼ ---
+            plotter.add_mesh(pv_mesh, 
+                             color=color, 
+                             opacity=opacity,
+                             show_edges=False,      
+                             smooth_shading=True,   # Kết hợp với compute_normals ở trên
+                             pbr=pbr,               
+                             metallic=metallic,
+                             roughness=roughness,
+                             pickable=True)
+
+        # --- 3. INTERACTION ---
+        def on_pick(mesh):
+            if mesh is None: return
+            try:
+                if "info" in mesh.field_data:
+                    # Xóa text cũ nếu có (bằng cách overwrite name='hud_info')
+                    plotter.add_text(
+                        f"== SEGMENT DETAILS ==\n{mesh.field_data['info'][0]}", 
+                        position='upper_left', 
+                        font_size=11, 
+                        color='white', 
+                        name='hud_info', 
+                        font='courier', # Dùng font đơn cách để căn lề đẹp
+                        shadow=True
+                    )
+            except Exception as e:
+                print(e)
+
+        plotter.enable_mesh_picking(on_pick, show=False, show_message=False)
+
+        # --- 4. HOÀN TẤT ---
+        plotter.add_text("HIGH QUALITY RENDER", position='upper_right', font_size=14, color='white')
+        
+        # Thêm đèn để tôn vinh độ bóng của bề mặt cong
+        light = pv.Light(position=(500, 500, 1000), color='white', intensity=0.7)
+        plotter.add_light(light)
+        
+        plotter.view_isometric()
+        plotter.show()

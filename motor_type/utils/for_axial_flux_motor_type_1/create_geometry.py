@@ -20,7 +20,11 @@ from core_class.models.Geometry import Geometry
 
 def create_geometry(motor,
                     rotor_angle_offset = 0, #rad
-                    stator_angle_offset = 0): #rad
+                    stator_angle_offset = 0,
+                    create_rotor_yoke = True,
+                    create_magnet = True,
+                    create_tooth = True,
+                    create_stator_yoke = True): #rad
     
     geometry = []
     
@@ -33,7 +37,8 @@ def create_geometry(motor,
                                   material = "iron",
                                   magnet_source= 0.0,
                                   )
-    geometry.append(rotor_yoke_template)
+    if create_rotor_yoke == True:
+        geometry.append(rotor_yoke_template)
 
     #create_magnet
     pole_number = motor.pole_number
@@ -64,7 +69,8 @@ def create_geometry(motor,
                                   material= "magnet",
                                   magnet_source= magnet_source,
                                   magnetization_direction=np.array([0,0,sign]))
-        geometry.append(magnet_template)
+        if create_magnet == True:
+            geometry.append(magnet_template)
     
     # create tooth tip 
     # component 1:
@@ -99,7 +105,9 @@ def create_geometry(motor,
         mesh_rotated = rotate_mesh_z(mesh_1, i * 2* pi / motor.slot_number)
         tooth_tip_rotated = Segment(mesh=mesh_rotated,
                                     material="iron")
-        #geometry.append(tooth_tip_rotated)
+        if create_tooth == True:
+            geometry.append(tooth_tip_rotated)
+            
 
     # component 2 
     w1 = (1/2) * (motor.slot_width - motor.slot_opening)
@@ -128,7 +136,8 @@ def create_geometry(motor,
     for i in range(int(motor.slot_number)):
         mesh2_rotated = rotate_mesh_z(mesh = mesh2,
                                       angle_rad= i * 2*pi / motor.slot_number)
-        geometry.append(Segment(mesh=mesh2_rotated,material="iron"))
+        if create_tooth == True:
+            geometry.append(Segment(mesh=mesh2_rotated,material="iron"))
 
     #create_tooth
     z_offset_4 = z_tooth_tip_2 + motor.slot_depth
@@ -140,16 +149,17 @@ def create_geometry(motor,
         mesh_3_rotated = rotate_mesh_z(mesh= mesh_3,
                                        angle_rad = i * 2 * pi / motor.slot_number)
         winding_vector = motor.winding_matrix[i]
-        geometry.append(Segment(mesh=mesh_3_rotated,
-                                material="iron",
-                                winding_vector = winding_vector))
+        if create_tooth == True:
+            geometry.append(Segment(mesh=mesh_3_rotated,
+                                    material="iron",
+                                    winding_vector = winding_vector))
         
     # create stator yoke
     stator_yoke_mesh = create_tube(inner_radius=motor.stator_bore_dia / 2,
                                    outer_radius=motor.stator_lam_dia /2,
                                    height = motor.stator_length,
                                    z_offset=z_offset_4)
-    
-    geometry.append(Segment(mesh = stator_yoke_mesh,
-                            material="iron"))
+    if create_stator_yoke == True:
+        geometry.append(Segment(mesh = stator_yoke_mesh,
+                                material="iron"))
     return Geometry(geometry=geometry)
