@@ -130,7 +130,7 @@ class Geometry:
                 if "info" in mesh.field_data:
                     # Xóa text cũ nếu có (bằng cách overwrite name='hud_info')
                     plotter.add_text(
-                        f"== SEGMENT DETAILS ==\n{mesh.field_data['info'][0]}", 
+                        f"Geometry details \n{mesh.field_data['info'][0]}", 
                         position='upper_left', 
                         font_size=11, 
                         color='white', 
@@ -147,7 +147,7 @@ class Geometry:
         plotter.add_text("HIGH QUALITY RENDER", position='upper_right', font_size=14, color='white')
         
         # Thêm đèn để tôn vinh độ bóng của bề mặt cong
-        light = pv.Light(position=(500, 500, 1000), color='white', intensity=0.7)
+        light = pv.Light(position=(500, 500, 1000), color='white', intensity=0.9)
         plotter.add_light(light)
         
         plotter.view_isometric()

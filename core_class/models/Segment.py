@@ -10,9 +10,9 @@ class Segment:
                  magnetization_direction = np.array([0,0,1]),
                  winding_vector = np.array([0,0,0]),
                  winding_normal = np.array([0,0,1]),
-                 angular_length = 0.0,
-                 radial_length = 0.0,
-                 axial_length = 0.0):
+                 angular_length = None,
+                 radial_length = None,
+                 axial_length = None):
         
         self.mesh = mesh
         self.material = material
