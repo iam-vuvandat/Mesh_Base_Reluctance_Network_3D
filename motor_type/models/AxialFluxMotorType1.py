@@ -127,15 +127,15 @@ class AxialFluxMotorType1:
                                         create_stator_yoke=create_stator_yoke)
 
     def create_adaptive_mesh(self,
-                             n_r=6,
-                             n_theta=60,
+                             n_r=5,
+                             n_theta=90,
                              n_z_in_air=2,
                              n_z_rotor_yoke=2,
                              n_z_magnet=2,
                              n_z_airgap=2,
                              n_z_tooth_tip_1=2,
                              n_z_tooth_tip_2=2,
-                             n_z_tooth_body=2,
+                             n_z_tooth_body=7,
                              n_z_stator_yoke=2,
                              n_z_out_air=2,
                              use_symmetry_factor=True,
