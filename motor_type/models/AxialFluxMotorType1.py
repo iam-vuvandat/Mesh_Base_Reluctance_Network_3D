@@ -127,19 +127,23 @@ class AxialFluxMotorType1:
                                         create_stator_yoke=create_stator_yoke)
 
     def create_adaptive_mesh(self,
-                             n_r=5,
-                             n_theta=90,
-                             n_z_in_air=2,
-                             n_z_rotor_yoke=2,
-                             n_z_magnet=2,
-                             n_z_airgap=2,
-                             n_z_tooth_tip_1=2,
-                             n_z_tooth_tip_2=2,
-                             n_z_tooth_body=7,
-                             n_z_stator_yoke=2,
-                             n_z_out_air=2,
-                             use_symmetry_factor=True,
-                             periodic_boundary=True):
+                         n_r_in=2,
+                         n_r_1=2,
+                         n_r_2=2,
+                         n_r_3=2,
+                         n_r_out=2,
+                         n_theta=90,
+                         n_z_in_air=2,
+                         n_z_rotor_yoke=2,
+                         n_z_magnet=2,
+                         n_z_airgap=2,
+                         n_z_tooth_tip_1=2,
+                         n_z_tooth_tip_2=4,
+                         n_z_tooth_body=4,
+                         n_z_stator_yoke=1,
+                         n_z_out_air=2,
+                         use_symmetry_factor=True,
+                         periodic_boundary=True):
         """
         Tạo lưới thích ứng (Adaptive Mesh) cho động cơ.
         Các tham số đầu vào sẽ ghi đè lên giá trị mặc định.
@@ -147,7 +151,11 @@ class AxialFluxMotorType1:
         # Gọi hàm tạo lưới và truyền đúng các biến số vào (không hardcode số)
         self.mesh = create_adaptive_mesh(
             motor=self,
-            n_r=n_r,
+            n_r_in=n_r_in,
+            n_r_1=n_r_1,
+            n_r_2=n_r_2,
+            n_r_3=n_r_3,
+            n_r_out=n_r_out,
             n_theta=n_theta,
             n_z_in_air=n_z_in_air,
             n_z_rotor_yoke=n_z_rotor_yoke,

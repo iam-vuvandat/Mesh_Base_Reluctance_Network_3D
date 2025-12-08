@@ -4,34 +4,52 @@ import math
 pi = math.pi
 
 def create_adaptive_mesh(motor,
-                         n_r = 20,
-                         n_theta = 180,
-                         n_z_in_air = 3,
-                         n_z_rotor_yoke = 4,
-                         n_z_magnet= 4,
-                         n_z_airgap =5,
-                         n_z_tooth_tip_1 = 1,
-                         n_z_tooth_tip_2 = 4,
-                         n_z_tooth_body = 4,
-                         n_z_stator_yoke = 3,
-                         n_z_out_air = 3,
-                         use_symmetry_factor = True,
+                         n_r_in=3,
+                         n_r_1=4,
+                         n_r_2=4,
+                         n_r_3=4,
+                         n_r_out=3,
+                         n_theta=180,
+                         n_z_in_air=3,
+                         n_z_rotor_yoke=4,
+                         n_z_magnet=4,
+                         n_z_airgap=5,
+                         n_z_tooth_tip_1=1,
+                         n_z_tooth_tip_2=4,
+                         n_z_tooth_body=4,
+                         n_z_stator_yoke=3,
+                         n_z_out_air=3,
+                         use_symmetry_factor=True,
                          periodic_boundary=True):
     
 
-    r_min = None
-    if (motor.stator_bore_dia - motor.shaft_hole_diameter) > 0 : 
-        r_min = motor.shaft_hole_diameter/2
-    else:
-        r_min = motor.stator_bore_dia/2
+    # --- Xử lý Radial (R) ---
+    # Logic cũ của bạn ok, nhưng hơi rườm rà. Giữ nguyên logic nhưng viết gọn:
+    r_min = motor.shaft_hole_diameter/2 if motor.stator_bore_dia > motor.shaft_hole_diameter else motor.stator_bore_dia/2
+    
+    # r_max biến này tính ra nhưng không thấy dùng? (Có thể xóa nếu không cần)
+    r_max = motor.stator_lam_dia/2 if motor.stator_lam_dia > motor.rotor_lam_dia else motor.rotor_lam_dia/2
 
-    r_max = None
-    if (motor.stator_lam_dia - motor.rotor_lam_dia) > 0 : 
-        r_max = motor.stator_lam_dia/2 
-    else: 
-        r_max = motor.rotor_lam_dia/2
+    r_in = np.linspace(r_min * 0.9, motor.shaft_hole_diameter / 2, n_r_in)
 
-    r_cordinate = np.linspace(r_min * 0.99 ,r_max* 1.01, n_r )
+    r_1 = np.linspace(r_in[-1],
+                      r_in[-1] + motor.rotor_lam_dia / 2 - motor.magnet_embed_depth - motor.magnet_depth- motor.shaft_hole_diameter / 2,
+                      n_r_1)
+    r_2 = np.linspace(r_1[-1],
+                      r_1[-1] + motor.magnet_depth,
+                      n_r_2)
+    r_3 = np.linspace(r_2[-1],
+                      r_2[-1] + motor.magnet_embed_depth,
+                      n_r_3)
+    r_out = np.linspace(r_3[-1],
+                        r_3[-1] * 1.1,
+                        n_r_out)
+
+    r_cordinate = np.concatenate([r_in,
+                                  r_1[1:],
+                                  r_2[1:],
+                                  r_3[1:],
+                                  r_out[1:]])
 
     if use_symmetry_factor == True: 
         symmetry_factor = motor.symmetry_factor
@@ -90,4 +108,4 @@ def create_adaptive_mesh(motor,
     return CylindricalMesh(r_nodes=r_cordinate,
                            theta_nodes= theta_cordinate,
                            z_nodes=z_cordinate,
-                           periodic_boundary= True)
+                           periodic_boundary= periodic_boundary)
