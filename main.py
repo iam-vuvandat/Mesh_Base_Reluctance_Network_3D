@@ -1,12 +1,17 @@
 from system.core.install_library import install_library
 from motor_type.models.AxialFluxMotorType1 import AxialFluxMotorType1
+from storage.core import workspace
 
-aft = AxialFluxMotorType1()
-aft.create_geometry(create_rotor_yoke = True,
-                    create_stator_yoke = True,
-                    create_tooth = True,
-                    create_magnet = True)
+re_create_motor = True
 
-aft.create_adaptive_mesh()
-aft.create_reluctance_network()
+if re_create_motor == False:
+    aft = workspace.load("aft1")
+else:
+    aft = AxialFluxMotorType1()
+    aft.create_geometry()
+    aft.create_adaptive_mesh()
+    aft.create_reluctance_network()
+    workspace.save(aft1 = aft)
+
 aft.show()
+aft.reluctance_network.show()

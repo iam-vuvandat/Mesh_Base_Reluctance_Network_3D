@@ -127,8 +127,8 @@ class AxialFluxMotorType1:
                                         create_stator_yoke=create_stator_yoke)
 
     def create_adaptive_mesh(self,
-                             n_r=10,
-                             n_theta=150,
+                             n_r=6,
+                             n_theta=60,
                              n_z_in_air=2,
                              n_z_rotor_yoke=2,
                              n_z_magnet=2,

@@ -28,7 +28,6 @@ class ElementInfo:
     segment_t_length: float = 0.0
     segment_z_length: float = 0.0
 
-
 def extract_element_info(
     position: tuple, 
     geometry: Any, 
