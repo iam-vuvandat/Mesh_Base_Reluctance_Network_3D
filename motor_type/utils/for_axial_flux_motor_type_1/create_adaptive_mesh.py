@@ -21,17 +21,17 @@ def create_adaptive_mesh(motor,
 
     r_min = None
     if (motor.stator_bore_dia - motor.shaft_hole_diameter) > 0 : 
-        r_min = motor.shaft_hole_diameter
+        r_min = motor.shaft_hole_diameter/2
     else:
-        r_min = motor.stator_bore_dia
+        r_min = motor.stator_bore_dia/2
 
     r_max = None
     if (motor.stator_lam_dia - motor.rotor_lam_dia) > 0 : 
-        r_max = motor.stator_lam_dia 
+        r_max = motor.stator_lam_dia/2 
     else: 
-        r_max = motor.rotor_lam_dia
+        r_max = motor.rotor_lam_dia/2
 
-    r_cordinate = np.linspace(r_min * 0.9,r_max * 1.1,n_r)
+    r_cordinate = np.linspace(r_min * 0.99 ,r_max* 1.01, n_r )
 
     if use_symmetry_factor == True: 
         symmetry_factor = motor.symmetry_factor
@@ -41,7 +41,7 @@ def create_adaptive_mesh(motor,
     else:
         theta_cordinate = np.linspace(0,2*pi,n_theta)
 
-    z_air_in = np.linspace(-motor.magnet_length,
+    z_air_in = np.linspace(-motor.rotor_length,
                            0,
                            n_z_in_air)
     z_rotor_yoke_cordinate = np.linspace(0,
