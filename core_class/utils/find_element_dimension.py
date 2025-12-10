@@ -13,8 +13,8 @@ def find_element_dimension(coordinate):
     r_out = coordinate[1,0]
     theta_right = coordinate[0,1]
     theta_left  = coordinate[1,1]
-    z_bottom = coordinate[2,0]
-    z_top = coordinate[2,1]
+    z_bottom = coordinate[0,2]
+    z_top = coordinate[1,2]
 
     # create empty array 
     length = np.zeros((2,3)) # [lrin,ltleft,lzbot;lrout,ltright,lztop]

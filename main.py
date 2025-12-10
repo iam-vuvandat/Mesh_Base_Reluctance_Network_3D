@@ -2,7 +2,7 @@
 from motor_type.models.AxialFluxMotorType1 import AxialFluxMotorType1
 from storage.core import workspace
 
-re_create_motor = False
+re_create_motor = True
 
 if re_create_motor == False:
     aft = workspace.load("aft1")
