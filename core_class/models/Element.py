@@ -1,4 +1,5 @@
 from core_class.utils.extract_element_info import extract_element_info
+from core_class.utils.find_element_dimension import find_element_dimension
 
 class Element:
     def __init__(self,
@@ -35,6 +36,11 @@ class Element:
         self.segment_winding_vector = info.winding_vector
         self.winding_normal = info.winding_normal
 
-        # pre - define
-        
+        # define dimension
+        dimension_calculated = find_element_dimension(coordinate=self.coordinate)
+        self.length = dimension_calculated.length
+        self.section_area = dimension_calculated.section_area
+
+        # 
+
 
