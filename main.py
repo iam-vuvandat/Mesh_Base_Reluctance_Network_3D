@@ -2,7 +2,7 @@ from system.core.install_library import install_library
 from motor_type.models.AxialFluxMotorType1 import AxialFluxMotorType1
 from storage.core import workspace
 
-re_create_motor = True
+re_create_motor = False
 
 if re_create_motor == False:
     aft = workspace.load("aft1")
@@ -13,5 +13,5 @@ else:
     aft.create_reluctance_network()
     workspace.save(aft1 = aft)
 
-aft.show()
+#aft.show()
 aft.reluctance_network.show()
