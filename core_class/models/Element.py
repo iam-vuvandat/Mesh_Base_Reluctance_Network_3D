@@ -6,12 +6,12 @@ class Element:
                  position = None,
                  geometry = None,
                  mesh = None,
-                 loop_flux = None,
+                 magnetic_potential = None,
                  winding_current = None):
         self.position = position
         self.material_database = motor.material_database
         self.position = position
-        self.loop_flux = loop_flux
+        self.magnetic_potential = magnetic_potential
         self.winding_current = winding_current
 
         info = extract_element_info(position=position,
@@ -21,15 +21,11 @@ class Element:
         # material
         self.material = info.material
 
-        # segment dimension
-        self.segment_r_length = info.segment_r_length
-        self.segment_t_length = info.segment_t_length
-        self.segment_t_length = info.segment_t_length
+        # dimension
+        self.dimension = info.dimension
 
-        # element dimension
-        self.element_r_length = info.element_r_length
-        self.element_t_length = info.element_t_length
-        self.element_z_length = info.element_z_length
+        # coordinate
+        self.coordinate = info.coordinate
 
         # magnet properties
         self.segment_magnet_source = info.magnet_source
@@ -38,3 +34,5 @@ class Element:
         # winding properties
         self.segment_winding_vector = info.winding_vector
         self.winding_normal = info.winding_normal
+
+        # pre - define

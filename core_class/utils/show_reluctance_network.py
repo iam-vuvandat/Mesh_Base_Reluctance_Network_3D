@@ -3,27 +3,25 @@ import pyvista as pv
 
 def show_reluctance_network(reluctance_network):
     """
-    Hiển thị Mạng từ trở (Phiên bản Custom Keys - Fix Font Error).
-    Phím tắt:
-      - i/o : Di chuyển Bán kính (Radial - i)
-      - l/r : Di chuyển Góc (Tangential - j)
-      - u/d : Di chuyển Trục (Axial - z)
+    Hiển thị Mạng từ trở (Phiên bản High Contrast - Fix GPU Crash).
+    - Sửa lỗi 'Too many props' bằng cách dùng CPU Picking.
+    - Nền tối, Sắt sáng, Opacity 90%/40%.
+    - Hiển thị đầy đủ Dimension Matrix (Element vs Segment).
     """
     
     # --- 1. CHUẨN BỊ DỮ LIỆU ---
     mesh_obj = reluctance_network.mesh
     elements_matrix = reluctance_network.elements
     
-    # Lấy kích thước lưới (nr=i, nt=j, nz=z)
     nr, nt, nz = elements_matrix.shape
     
     print("[VISUALIZATION] Generating Voxel Data...")
     grid_pv = mesh_obj.to_pyvista_grid()
     
-    # Flatten dữ liệu theo thứ tự Fortran
+    # Flatten dữ liệu
     flat_elements = elements_matrix.flatten(order='F')
     
-    # Gán ID gốc để pick chính xác
+    # Gán ID gốc
     grid_pv.cell_data["OrigID"] = np.arange(grid_pv.n_cells)
     
     # Tạo ID vật liệu
@@ -38,127 +36,162 @@ def show_reluctance_network(reluctance_network):
     
     grid_pv.cell_data["MatID"] = mat_ids
 
-    # --- 2. KHỞI TẠO PLOTTER ---
+    # --- 2. CẤU HÌNH GIAO DIỆN (DARK MODE & HD) ---
     pv.set_plot_theme("dark")
-    pl = pv.Plotter(window_size=[1400, 1000])
-    pl.set_background("#0F0F0F")
+    # Tăng độ phân giải lên 2K cho nét
+    pl = pv.Plotter(window_size=[2560, 1440]) 
+    pl.set_background("#111111") 
     pl.add_axes()
     
-    # Cập nhật hướng dẫn phím bấm trên màn hình
-    instructions = (
-        "NAVIGATION MODE\n"
-        "----------------\n"
-        "Click : Select Element\n"
-        "i / o : Radius (In/Out)\n"
-        "l / r : Theta  (Left/Right)\n"
-        "u / d : Z-Axis (Up/Down)"
-    )
-    # SỬA LỖI: Dùng 'font' thay vì 'font_family'
-    pl.add_text(instructions, position='upper_right', font_size=10, color='white', font='courier')
+    # Bật khử răng cưa để đường nét mịn hơn
+    try:
+        pl.enable_anti_aliasing('ssaa')
+    except: pass # Bỏ qua nếu card không hỗ trợ
 
-    # --- 3. VẼ CÁC LỚP VẬT LIỆU ---
+    # --- 3. VẼ CÁC LỚP VẬT LIỆU (STYLES) ---
     styles = {
-        0: ("Air",    "white",  0.1), 
-        1: ("Iron",   "gray",   1.0),
-        2: ("Magnet", "red",    1.0),
-        3: ("Coil",   "orange", 1.0)
+        # Air: Màu xám đậm + 40% opacity (Hiệu ứng kính khói)
+        0: ("Air",    "#333333", 0.4), 
+        # Iron: Màu trắng bạc sáng -> Nổi bật nhất
+        1: ("Iron",   "#F0F0F0", 0.9), 
+        # Magnet: Đỏ tươi
+        2: ("Magnet", "#FF3333", 0.9), 
+        # Coil: Vàng cam sáng
+        3: ("Coil",   "#FFAA00", 0.9)  
     }
 
     for mat_id, (label, color, opacity) in styles.items():
         sub_mesh = grid_pv.threshold([mat_id, mat_id], scalars="MatID", preference="cell")
         if sub_mesh.n_cells > 0:
-            edge_color = "#444444" if mat_id == 0 else "#222222"
+            edge_color = "#222222" if mat_id == 0 else "#555555"
             pl.add_mesh(sub_mesh, color=color, opacity=opacity, 
                         show_edges=True, edge_color=edge_color, label=label,
                         pickable=True)
 
-    # --- 4. LOGIC TRẠNG THÁI (STATE) ---
+    # --- 4. BỐ CỤC VĂN BẢN ---
+    # [GÓC TRÊN PHẢI] - Hướng dẫn
+    instructions = (
+        "CONTROLS\n"
+        "w / s : Radius\n"
+        "d / a : Theta\n"
+        "r / f : Axial"
+    )
+    pl.add_text(instructions, position='upper_right', font_size=9, color='#DDDDDD', font='courier')
+
+    # [GÓC DƯỚI PHẢI] - Chú thích
+    pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.15, 0.15), loc='lower right', face='rectangle')
+
+    # --- 5. LOGIC TRẠNG THÁI (STATE) ---
     class ViewerState:
         def __init__(self):
-            self.selected_idx = None # Tuple (ir, it, iz)
+            self.selected_idx = None 
             self.highlight_actor = None 
+            self.info_actor = None 
 
         def update_selection(self, ir, it, iz):
-            # Kiểm tra biên (Boundary Check)
-            if not (0 <= ir < nr and 0 <= it < nt and 0 <= iz < nz): 
-                return # Ra ngoài lưới thì không làm gì
+            if not (0 <= ir < nr and 0 <= it < nt and 0 <= iz < nz): return 
 
             self.selected_idx = (ir, it, iz)
-            
-            # Tính Flat ID
             flat_id = ir + it * nr + iz * (nr * nt)
             
-            # --- HIGHLIGHT (Làm sáng) ---
+            # --- HIGHLIGHT (CYAN) ---
             if self.highlight_actor:
                 pl.remove_actor(self.highlight_actor)
             
             try:
                 cell_geo = grid_pv.extract_cells([flat_id])
-                # Vẽ khung dây màu vàng sáng
-                self.highlight_actor = pl.add_mesh(cell_geo, style='wireframe', color='yellow', 
-                                                   line_width=5, render=False, name="highlight")
+                self.highlight_actor = pl.add_mesh(cell_geo, style='wireframe', color='#00FFFF', 
+                                                    line_width=4, render=False, name="highlight")
             except: pass
 
-            # --- HIỂN THỊ THÔNG TIN ---
+            # --- [GÓC TRÊN TRÁI] - CẬP NHẬT THÔNG TIN ---
             element_obj = elements_matrix[ir, it, iz]
             
-            # Header thông tin tọa độ
-            info_str = f"INDEX: [i={ir}, j={it}, z={iz}]\n"
-            info_str += f"Global ID: {flat_id}\n"
+            info_str = f"SELECTED ELEMENT\n"
+            info_str += f"Idx: [{ir}, {it}, {iz}] | ID: {flat_id}\n"
+            info_str += "-"*35 + "\n"
             
             if element_obj is None:
-                info_str += "Status: Empty Element"
+                info_str += "Status: Empty"
             else:
-                info_str += "="*25 + "\n"
                 attrs = vars(element_obj)
                 for key, val in attrs.items():
-                    if isinstance(val, float): info_str += f"{key}: {val:.4e}\n"
-                    elif key in ['mesh', 'motor', 'geometry']: info_str += f"{key}: <Ref>\n"
-                    else: info_str += f"{key}: {val}\n"
+                    if key == "dimension" and isinstance(val, np.ndarray):
+                        # Hiển thị đẹp ma trận Dimension 2x3
+                        # Row 0: Element, Row 1: Segment
+                        # Col: r, theta, z
+                        info_str += "Dimension (2x3) [r, theta, z]:\n"
+                        info_str += f"  El : [{val[0,0]:.2e}, {val[0,1]:.2e}, {val[0,2]:.2e}]\n"
+                        info_str += f"  Seg: [{val[1,0]:.2e}, {val[1,1]:.2e}, {val[1,2]:.2e}]\n"
+                    
+                    elif key == "coordinate" and isinstance(val, np.ndarray):
+                        info_str += "Coordinate (2x3) [r, theta, z]:\n"
+                        info_str += f"  Start: [{val[0,0]:.2f}, {val[0,1]:.2f}, {val[0,2]:.2f}]\n"
+                        info_str += f"  End  : [{val[1,0]:.2f}, {val[1,1]:.2f}, {val[1,2]:.2f}]\n"
+                    
+                    elif isinstance(val, float): 
+                        info_str += f"{key}: {val:.4e}\n"
+                    elif isinstance(val, np.ndarray) and val.size <= 6:
+                        arr_str = np.array2string(val.flatten(), precision=2, separator=', ')
+                        info_str += f"{key}: {arr_str}\n"
+                    elif key in ['mesh', 'motor', 'geometry']: 
+                        info_str += f"{key}: <Ref Object>\n"
+                    else: 
+                        info_str += f"{key}: {val}\n"
 
-            # SỬA LỖI: Dùng 'font' thay vì 'font_family'
-            pl.add_text(info_str, position='upper_left', font_size=12, 
-                        color='yellow', font='courier', name='hud_info')
+            if self.info_actor:
+                pl.remove_actor(self.info_actor)
+                
+            self.info_actor = pl.add_text(info_str, position='upper_left', font_size=10, 
+                        color='#EEFF00', font='courier', name='hud_info')
             pl.render()
 
     state = ViewerState()
 
-    # --- 5. CLICK CHUỘT ---
+    # --- 6. XỬ LÝ CLICK CHUỘT (QUAN TRỌNG: FIX CRASH) ---
     def on_cell_picked(picked_mesh):
-        if picked_mesh is None or picked_mesh.n_cells == 0: return
+        if picked_mesh is None: return
+        if isinstance(picked_mesh, pv.MultiBlock):
+            if len(picked_mesh) == 0: return
+            picked_mesh = picked_mesh[0]
+
+        if not hasattr(picked_mesh, 'n_cells') or picked_mesh.n_cells == 0:
+            return
+
         if "OrigID" in picked_mesh.cell_data:
             original_id = picked_mesh.cell_data["OrigID"][0]
-            # Convert ID -> (ir, it, iz)
             iz = original_id // (nr * nt)
             rem = original_id % (nr * nt)
             it = rem // nr
             ir = rem % nr
             state.update_selection(ir, it, iz)
 
-    pl.enable_cell_picking(mesh=None, callback=on_cell_picked, show=False, show_message=False, through=False)
+    # THÊM `use_hardware=False` ĐỂ SỬ DỤNG CPU PICKING (Tránh lỗi 16M props)
+    pl.enable_cell_picking(
+        mesh=None, 
+        callback=on_cell_picked, 
+        show=False, 
+        show_message=False, 
+        through=False, 
+        use_hardware=False  # <-- FIX IS HERE
+    )
 
-    # --- 6. CÀI ĐẶT PHÍM BẤM (KEY BINDINGS) ---
+    # --- 7. CÀI ĐẶT PHÍM ---
     def move_cursor(dr, dt, dz):
-        # Nếu chưa chọn gì thì bắt đầu từ (0,0,0)
         if state.selected_idx is None:
             state.update_selection(0, 0, 0)
         else:
             r, t, z = state.selected_idx
             state.update_selection(r + dr, t + dt, z + dz)
 
-    # Phím điều hướng bán kính (Radial - i)
-    pl.add_key_event("o", lambda: move_cursor(1, 0, 0))   # o: i+1 (Out)
-    pl.add_key_event("i", lambda: move_cursor(-1, 0, 0))  # i: i-1 (In)
+    pl.add_key_event("w", lambda: move_cursor(1, 0, 0))   
+    pl.add_key_event("s", lambda: move_cursor(-1, 0, 0))  
+    pl.add_key_event("d", lambda: move_cursor(0, 1, 0))   
+    pl.add_key_event("a", lambda: move_cursor(0, -1, 0))  
+    pl.add_key_event("r", lambda: move_cursor(0, 0, 1))   
+    pl.add_key_event("f", lambda: move_cursor(0, 0, -1)) 
 
-    # Phím điều hướng góc (Tangential - j)
-    pl.add_key_event("r", lambda: move_cursor(0, 1, 0))   # r: j+1 (Right)
-    pl.add_key_event("l", lambda: move_cursor(0, -1, 0))  # l: j-1 (Left)
-
-    # Phím điều hướng trục (Axial - z)
-    pl.add_key_event("u", lambda: move_cursor(0, 0, 1))   # u: z+1 (Up)
-    pl.add_key_event("d", lambda: move_cursor(0, 0, -1))  # d: z-1 (Down)
-
-    # --- 7. HIỂN THỊ ---
-    pl.add_legend(bcolor=(0.1, 0.1, 0.1), border=True, size=(0.15, 0.15))
+    
+    # --- 8. HIỂN THỊ ---
     pl.view_isometric()
     pl.show()

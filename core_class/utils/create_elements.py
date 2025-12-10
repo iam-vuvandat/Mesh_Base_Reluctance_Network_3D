@@ -37,7 +37,9 @@ def create_elements(motor, debug=True):
                         position=position,
                         motor=motor,
                         geometry=motor.geometry,
-                        mesh=motor.mesh
+                        mesh=motor.mesh,
+                        magnetic_potential = motor.magnetic_potential,
+                        winding_current = motor.winding_current
                     )
                     
                     # Cập nhật thanh tiến trình thêm 1 đơn vị

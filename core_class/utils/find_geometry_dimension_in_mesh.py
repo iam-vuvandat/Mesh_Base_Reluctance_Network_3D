@@ -4,9 +4,12 @@ from tqdm import tqdm
 
 def find_geometry_dimension_in_mesh(geometry, mesh):
     """
-    Đo đạc kích thước r, t, z của các segment trong không gian lưới.
-    Cập nhật trực tiếp thuộc tính: r_length, t_length, z_length.
-    Nếu segment nằm hoàn toàn ngoài lưới, giữ giá trị là None.
+    Đo đạc kích thước [r, theta, z] của các segment trong không gian lưới.
+    Cập nhật trực tiếp thuộc tính: seg.dimension = np.array([r, theta, z]).
+    
+    r: Chiều dày theo phương bán kính.
+    theta: Góc mở (Radian).
+    z: Chiều dài theo phương trục.
     """
     
     # 1. Lấy danh sách segment
@@ -27,10 +30,8 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
     count_fallback = 0
     
     for seg in tqdm(segments, desc="Processing"):
-        # Reset hoặc khởi tạo giá trị mặc định là None (để đánh dấu chưa tính/không tính)
-        seg.r_length = None
-        seg.t_length = None
-        seg.z_length = None
+        # Mặc định reset dimension về [0,0,0] nếu cần, hoặc giữ nguyên
+        # Ở đây ta sẽ tính toán giá trị mới
         
         if seg.mesh is None:
             continue
@@ -46,15 +47,12 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
         r_seg_min, r_seg_max = np.min(r_corners), np.max(r_corners)
         
         # Kiểm tra nhanh: Segment có nằm hoàn toàn ngoài phạm vi R hoặc Z của lưới không?
-        # Nếu R_seg_max < Grid_R_min (Nằm trong lỗ trục)
-        # Hoặc R_seg_min > Grid_R_max (Nằm ngoài vỏ)
-        # Hoặc Z_seg_max < Grid_Z_min (Nằm dưới đáy)
-        # Hoặc Z_seg_min > Grid_Z_max (Nằm trên đỉnh)
         if (r_seg_max < grid_r_min or r_seg_min > grid_r_max or 
             z_seg_max < grid_z_min or z_seg_min > grid_z_max):
             
             count_out_of_bounds += 1
-            # Không làm gì cả, giữ nguyên là None và skip qua segment này
+            # Segment ngoài vùng tính toán -> Set dimension = 0 hoặc giữ nguyên
+            seg.dimension = np.array([0., 0., 0.])
             continue
 
         # --- BƯỚC 2: TÌM INDEX TRÊN GRID ---
@@ -65,12 +63,12 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
         i_z_start = max(0, np.searchsorted(z_nodes, z_seg_min) - 1)
         i_z_end   = min(len(z_nodes)-1, np.searchsorted(z_nodes, z_seg_max) + 1)
         
-        # Theta quét toàn bộ (để an toàn)
+        # Theta quét toàn bộ (để an toàn vì BBox Descartes không phản ánh đúng góc)
         i_t_start, i_t_end = 0, len(t_nodes) - 1
         
-        # Check lại lần nữa index (phòng hờ searchsorted trả về biên)
         if i_r_start >= i_r_end or i_z_start >= i_z_end:
             count_out_of_bounds += 1
+            seg.dimension = np.array([0., 0., 0.])
             continue
 
         # --- BƯỚC 3: TẠO LƯỚI TÂM CỤC BỘ ---
@@ -85,7 +83,7 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
         # Meshgrid 3D
         R_g, T_g, Z_g = np.meshgrid(r_c, t_c, z_c, indexing='ij')
         
-        # Sang Descartes
+        # Sang Descartes để check va chạm
         X_flat = (R_g * np.cos(T_g)).flatten()
         Y_flat = (R_g * np.sin(T_g)).flatten()
         Z_flat = Z_g.flatten()
@@ -99,6 +97,9 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
         # --- BƯỚC 4: KIỂM TRA VA CHẠM ---
         mask = seg.mesh.contains(candidates)
         
+        # Khởi tạo biến kết quả
+        r_val, theta_val, z_val = 0.0, 0.0, 0.0
+
         # --- BƯỚC 5: TÍNH TOÁN KÍCH THƯỚC ---
         if np.any(mask):
             # == TRƯỜNG HỢP 1: CÓ VOXEL BỊ CHIẾM (LÝ TƯỞNG) ==
@@ -107,44 +108,43 @@ def find_geometry_dimension_in_mesh(geometry, mesh):
             
             # A. R Length
             min_r, max_r = np.min(valid_r), np.max(valid_r)
-            seg.r_length = float(r_sub[max_r + 1] - r_sub[min_r])
+            r_val = float(r_sub[max_r + 1] - r_sub[min_r])
             
-            # B. Z Length
-            min_z, max_z = np.min(valid_z), np.max(valid_z)
-            seg.z_length = float(z_sub[max_z + 1] - z_sub[min_z])
-            
-            # C. T Length (Arc)
+            # B. Theta (Góc mở - Radian)
             min_t, max_t = np.min(valid_t), np.max(valid_t)
-            opening_angle = t_sub[max_t + 1] - t_sub[min_t]
+            # Tính góc mở trực tiếp từ node t
+            theta_val = float(t_sub[max_t + 1] - t_sub[min_t])
             
-            # Bán kính trung bình của vùng bị chiếm
-            r_occupied_avg = (r_sub[max_r + 1] + r_sub[min_r]) / 2.0
-            seg.t_length = float(r_occupied_avg * opening_angle)
+            # C. Z Length
+            min_z, max_z = np.min(valid_z), np.max(valid_z)
+            z_val = float(z_sub[max_z + 1] - z_sub[min_z])
             
         else:
             # == TRƯỜNG HỢP 2: FALLBACK (SEGMENT QUÁ MỎNG) ==
-            # Segment nằm trong phạm vi lưới nhưng không chứa tâm voxel nào.
-            # Ta dùng chính Bounding Box của Segment để ước lượng.
-            
+            # Segment nhỏ hơn 1 ô lưới, dùng BBox hoặc kích thước ô lưới làm fallback
             count_fallback += 1
             
-            # Z fallback
-            seg.z_length = float(z_seg_max - z_seg_min)
+            # Z fallback: Dùng chiều cao BBox
+            z_val = float(z_seg_max - z_seg_min)
             
-            # R fallback
-            seg.r_length = float(r_seg_max - r_seg_min)
+            # R fallback: Dùng bề dày BBox theo phương R
+            r_val = float(r_seg_max - r_seg_min)
             
-            # T fallback: Lấy kích thước của 1 ô lưới làm "kích thước tối thiểu"
-            if len(r_c) > 0 and len(t_c) > 0:
-                 dr_grid = r_sub[1] - r_sub[0]
+            # Theta fallback:
+            # Vì segment quá nhỏ để chiếm 1 voxel, ta không thể đo chính xác góc.
+            # Ta lấy kích thước của 1 ô lưới góc (dt) làm kích thước tối thiểu.
+            if len(t_sub) > 1:
                  dt_grid = t_sub[1] - t_sub[0]
-                 
-                 # Gán kích thước tối thiểu nếu kích thước BBox quá nhỏ
-                 if seg.r_length < 1e-9: seg.r_length = float(dr_grid)
-                 if seg.z_length < 1e-9: seg.z_length = float(z_sub[1]-z_sub[0])
-                 
-                 r_center_grid = (r_sub[0] + r_sub[-1])/2
-                 seg.t_length = float(r_center_grid * dt_grid)
+                 theta_val = float(dt_grid)
+            else:
+                 theta_val = 0.0 # Should not happen if grid is valid
+
+            # Fallback an toàn nếu BBox = 0 (điểm hoặc đường thẳng)
+            if r_val < 1e-9 and len(r_sub) > 1: r_val = float(r_sub[1] - r_sub[0])
+            if z_val < 1e-9 and len(z_sub) > 1: z_val = float(z_sub[1] - z_sub[0])
+
+        # --- BƯỚC 6: CẬP NHẬT DIMENSION CHO SEGMENT ---
+        seg.dimension = np.array([r_val, theta_val, z_val])
 
     if count_out_of_bounds > 0:
         print(f"[INFO] Skipped {count_out_of_bounds} segments completely out of mesh bounds.")
