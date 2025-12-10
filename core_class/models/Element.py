@@ -50,4 +50,9 @@ class Element:
         # define minimum reluctance
         self.minimum_reluctance = find_minimum_reluctance(element = self).reluctance
 
+        # initialization for the first time
+        self.reluctance = None
+        self.flux_density = None
+        self.flux_direct = None
 
+        
