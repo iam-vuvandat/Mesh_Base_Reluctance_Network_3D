@@ -1,10 +1,18 @@
-from system.core.install_library import install_library
-
+#from system.core.install_library import install_library
+from matplotlib.pylab import False_
 from motor_type.models.AxialFluxMotorType1 import AxialFluxMotorType1
-aft = AxialFluxMotorType1()
-aft.create_geometry(create_rotor_yoke = True,
-                    create_stator_yoke = True,
-                    create_tooth = True)
-aft.geometry.show()
-aft.create_adaptive_mesh()
-aft.mesh.show()
+from storage.core import workspace
+
+re_create_motor = False
+
+if re_create_motor == False:
+    aft = workspace.load("aft1")
+else:
+    aft = AxialFluxMotorType1()
+    aft.create_geometry()
+    aft.create_adaptive_mesh()
+    aft.create_reluctance_network()
+    workspace.save(aft1 = aft)
+
+aft.show()
+aft.reluctance_network.show()

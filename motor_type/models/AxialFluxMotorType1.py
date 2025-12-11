@@ -2,7 +2,9 @@ from motor_type.utils.for_axial_flux_motor_type_1.find_symmetry_factor import fi
 from motor_type.utils.for_axial_flux_motor_type_1.find_winding_matrix import find_winding_matrix
 from material.models.MaterialDataBase import MaterialDataBase
 from motor_type.utils.for_axial_flux_motor_type_1.create_geometry import create_geometry
+from core_class.models.ReluctanceNetwork import ReluctanceNetwork
 from motor_type.utils.for_axial_flux_motor_type_1.create_adaptive_mesh import create_adaptive_mesh
+import pyvista as pv
 import math
 pi = math.pi
 
@@ -106,6 +108,7 @@ class AxialFluxMotorType1:
                                                   iron_type= iron_type)
         self.geometry = None
         self.mesh     = None
+        self.reluctance_network = None
 
     def create_geometry(self,
                         rotor_angle_offset = 0,
@@ -124,19 +127,23 @@ class AxialFluxMotorType1:
                                         create_stator_yoke=create_stator_yoke)
 
     def create_adaptive_mesh(self,
-                             n_r=10,
-                             n_theta=150,
-                             n_z_in_air=2,
-                             n_z_rotor_yoke=2,
-                             n_z_magnet=2,
-                             n_z_airgap=3,
-                             n_z_tooth_tip_1=1,
-                             n_z_tooth_tip_2=3,
-                             n_z_tooth_body=3,
-                             n_z_stator_yoke=2,
-                             n_z_out_air=2,
-                             use_symmetry_factor=True,
-                             periodic_boundary=True):
+                         n_r_in=4,
+                         n_r_1=4,
+                         n_r_2=7,
+                         n_r_3=4,
+                         n_r_out=2,
+                         n_theta=120,
+                         n_z_in_air=3,
+                         n_z_rotor_yoke=3,
+                         n_z_magnet=3,
+                         n_z_airgap=3,
+                         n_z_tooth_tip_1=3,
+                         n_z_tooth_tip_2=3,
+                         n_z_tooth_body=7,
+                         n_z_stator_yoke=3,
+                         n_z_out_air=3,
+                         use_symmetry_factor=True,
+                         periodic_boundary=True):
         """
         Tạo lưới thích ứng (Adaptive Mesh) cho động cơ.
         Các tham số đầu vào sẽ ghi đè lên giá trị mặc định.
@@ -144,7 +151,11 @@ class AxialFluxMotorType1:
         # Gọi hàm tạo lưới và truyền đúng các biến số vào (không hardcode số)
         self.mesh = create_adaptive_mesh(
             motor=self,
-            n_r=n_r,
+            n_r_in=n_r_in,
+            n_r_1=n_r_1,
+            n_r_2=n_r_2,
+            n_r_3=n_r_3,
+            n_r_out=n_r_out,
             n_theta=n_theta,
             n_z_in_air=n_z_in_air,
             n_z_rotor_yoke=n_z_rotor_yoke,
@@ -161,4 +172,64 @@ class AxialFluxMotorType1:
         
         return self.mesh
     
+    def create_reluctance_network(self):
+        self.reluctance_network = ReluctanceNetwork(motor = self,
+                                                    geometry=self.geometry,
+                                                    mesh = self.mesh)
+        
+        return self.reluctance_network
     
+    def show(self, show_geometry=True, show_mesh=True):
+        """
+        Hiển thị toàn bộ mô hình động cơ (Geometry + Mesh).
+        Kết hợp tính năng tương tác (Click) của Geometry và trực quan hóa Lưới.
+        """
+        
+
+        # --- 1. KHỞI TẠO SÂN KHẤU CHUNG (PLOTTER) ---
+        pv.set_plot_theme("dark")
+        pl = pv.Plotter(window_size=[1400, 1000])
+        pl.set_background("#0F0F0F")  # Nền đen tuyền hiện đại
+        pl.add_axes()
+        
+        # [FIX]: Sửa position='upper_center' thành 'upper_right' để tránh KeyError
+        # và dùng font to hơn một chút để làm tiêu đề
+        pl.add_text("AXIAL FLUX MOTOR SIMULATION", position='upper_right', font_size=10, color='white')
+
+        # Thêm đèn chiếu sáng (Quan trọng để Geometry hiện khối 3D đẹp)
+        light = pv.Light(position=(1000, 1000, 1000), color='white', intensity=0.9)
+        pl.add_light(light)
+
+        has_content = False
+
+        # --- 2. VẼ GEOMETRY (CÁC KHỐI ĐẶC) ---
+        if show_geometry:
+            if hasattr(self, 'geometry') and self.geometry is not None:
+                print("[INFO] Adding Geometry layer...")
+                # Gọi hàm show của Geometry, truyền plotter 'pl' vào.
+                # Geometry sẽ vẽ các khối lên 'pl' và gắn sự kiện click vào 'pl'.
+                # Thông tin click sẽ hiện ở 'upper_left'
+                self.geometry.show(plotter=pl)
+                has_content = True
+            else:
+                print("[WARNING] Geometry data is missing. Please run 'create_geometry()' first.")
+
+        # --- 3. VẼ MESH (LƯỚI TÍNH TOÁN) ---
+        if show_mesh:
+            if hasattr(self, 'mesh') and self.mesh is not None:
+                print("[INFO] Adding Mesh layer...")
+                # Gọi hàm show của Mesh, truyền plotter 'pl' vào.
+                # Mesh sẽ tự động vẽ mờ (opacity=0.3)
+                # Thông tin thống kê mesh sẽ hiện ở 'lower_left'
+                self.mesh.show(plotter=pl, show_edges=True)
+                has_content = True
+            else:
+                print("[WARNING] Mesh data is missing. Please run 'create_adaptive_mesh()' first.")
+
+        # --- 4. HIỂN THỊ CỬA SỔ ---
+        if has_content:
+            print("[INFO] Displaying interactive window...")
+            pl.view_isometric()
+            pl.show()
+        else:
+            print("[ERROR] Nothing to show. Please generate Geometry or Mesh first.")
