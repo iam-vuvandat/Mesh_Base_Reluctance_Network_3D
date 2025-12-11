@@ -1,9 +1,8 @@
 import numpy as np
 import pyvista as pv
-import ctypes # Thư viện quan trọng để fix lỗi mờ trên Windows
+import ctypes 
 
 # --- 1. FIX LỖI MỜ (HIGH-DPI SCALING) ---
-# Bắt buộc phải có đoạn này trên Surface Pro / Màn hình 2K/4K
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
 except Exception:
@@ -31,18 +30,13 @@ def show_reluctance_network(reluctance_network):
     grid_pv.cell_data["MatID"] = mat_ids
 
     pv.set_plot_theme("dark")
-    
-    # Window size lớn để tận dụng màn hình 2K
     pl = pv.Plotter(window_size=[2560, 1440]) 
     pl.set_background("#050505") 
     pl.add_axes()
     
-    # --- 2. KHỬ RĂNG CƯA CHUYÊN DỤNG (MSAA) ---
-    # MSAA (Multi-Sample) tốt hơn SSAA cho các đường Wireframe
     try:
         pl.enable_anti_aliasing('msaa', multi_samples=8)
-    except: 
-        pass
+    except: pass
 
     styles = {
         0: ("Air",    "#333333", 0.4), 
@@ -51,8 +45,6 @@ def show_reluctance_network(reluctance_network):
         3: ("Coil",   "#FFAA00", 0.9)  
     }
 
-    # --- 3. TĂNG ĐỘ DÀY NÉT VẼ (LINE WIDTH) ---
-    # Trên màn 2K, line_width=1 nhìn rất mảnh và gai. Tăng lên 2.0 sẽ mượt hơn.
     line_w = 2.0 
 
     for mat_id, (label, color, opacity) in styles.items():
@@ -64,7 +56,8 @@ def show_reluctance_network(reluctance_network):
                         pickable=True, line_width=line_w)
 
     instructions = "CONTROLS\nw / s : Radius\nd / a : Theta\nr / f : Axial\nt     : Toggle Text"
-    pl.add_text(instructions, position='upper_right', font_size=10, color='white', font='courier')
+    # Giảm font hướng dẫn xuống 12 cho gọn
+    pl.add_text(instructions, position='upper_right', font_size=12, color='white', font='courier')
     pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.15, 0.15), loc='lower right', face='rectangle')
 
     class ViewerState:
@@ -85,7 +78,6 @@ def show_reluctance_network(reluctance_network):
             
             try:
                 cell_geo = grid_pv.extract_cells([flat_id])
-                # Highlight cũng tăng độ dày lên 5
                 self.highlight_actor = pl.add_mesh(cell_geo, style='wireframe', color='#00FFFF', 
                                                     line_width=5, render=False, name="highlight")
             except: pass
@@ -106,6 +98,8 @@ def show_reluctance_network(reluctance_network):
             else:
                 attrs = vars(element_obj)
                 for key, val in attrs.items():
+                    # --- XỬ LÝ FORMAT 6 CHỮ SỐ CHO MỌI LOẠI DỮ LIỆU ---
+                    
                     if key == "dimension" and isinstance(val, np.ndarray):
                         info_str += "Dimension (2x3) [r, theta, z]:\n"
                         info_str += f"  El : [{val[0,0]:.6f}, {val[0,1]:.6f}, {val[0,2]:.6f}]\n"
@@ -117,10 +111,14 @@ def show_reluctance_network(reluctance_network):
                         info_str += f"  End  : [{val[1,0]:.6f}, {val[1,1]:.6f}, {val[1,2]:.6f}]"
                     
                     elif isinstance(val, float): 
+                        # Ép kiểu float 6 số
                         info_str += f"{key}: {val:.6f}"
                     
                     elif isinstance(val, np.ndarray):
-                        arr_str = np.array2string(val.flatten(), precision=6, separator=', ')
+                        # Ép kiểu array toàn bộ phần tử 6 số
+                        # floatmode='fixed' để bắt buộc hiện đủ 6 số 0
+                        with np.printoptions(formatter={'float': '{: 0.6f}'.format}):
+                            arr_str = np.array2string(val.flatten(), separator=', ')
                         info_str += f"{key}:\n{arr_str}"
 
                     elif key in ['mesh', 'motor', 'geometry']: 
@@ -131,7 +129,8 @@ def show_reluctance_network(reluctance_network):
                     
                     info_str += "\n\n"
             
-            self.info_actor = pl.add_text(info_str, position='upper_left', font_size=11, 
+            # [UPDATE] Font size = 16 theo yêu cầu
+            self.info_actor = pl.add_text(info_str, position='upper_left', font_size=16, 
                                         color='white', font='courier', name='hud_info')
             pl.render()
 

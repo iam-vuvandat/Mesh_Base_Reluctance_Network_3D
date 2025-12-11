@@ -3,6 +3,9 @@ from core_class.utils.extract_element_info import extract_element_info
 from core_class.utils.find_element_dimension import find_element_dimension
 from core_class.utils.find_minimum_reluctance import find_minimum_reluctance
 from core_class.utils.find_magnet_source import find_magnet_source
+from core_class.utils.find_element_segment_dimension_ratio import find_element_segment_dimension_ratio
+from core_class.utils.find_winding_source import find_winding_source
+from core_class.utils.find_total_magnetic_source import find_total_magnetic_source
 
 class Element:
     def __init__(self,
@@ -33,6 +36,9 @@ class Element:
         # dimension
         self.dimension = info.dimension
 
+        # dimension ratio
+        self.dimension_ratio = find_element_segment_dimension_ratio(element= self).dimension_ratio
+
         # coordinate
         self.coordinate = info.coordinate
 
@@ -44,6 +50,12 @@ class Element:
         # winding properties
         self.segment_winding_vector = info.winding_vector
         self.winding_normal = info.winding_normal
+        self.element_winding_vector = None
+        self.element_winding_vector = find_winding_source(element=self).element_winding_vector
+        self.winding_source = find_winding_source(element=self).winding_source
+        
+        # total magnetic source 
+        self.magnetic_source = find_total_magnetic_source(element=self).total_magnetic_source
 
         # define dimension
         dimension_calculated = find_element_dimension(coordinate=self.coordinate)

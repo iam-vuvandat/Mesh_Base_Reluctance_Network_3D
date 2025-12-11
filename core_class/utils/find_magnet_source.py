@@ -1,27 +1,41 @@
 from dataclasses import dataclass
+from typing import Any
 import numpy as np
 
 @dataclass
 class Output:
-    magnet_source: np.ndarray
+    magnet_source : Any
+
 
 def find_magnet_source(element):
-    dims = element.dimension
+    """
+        Đối với các mảng (2x3) chứa nhiều thông tin, vị trí tương ứng:
+        [     r_in    t_left     z_bot
+              r_out   t_right    z_top    ]
+    """
     
-    if np.any(dims == 0):
-        return Output(magnet_source=np.zeros((2, 3)))
+    # Độ lớn vector từ hóa của segment:
+    absFseg = element.segment_magnet_source
 
-    mag = float(element.segment_magnet_source)
+    # Vector chỉ phương (độ lớn vector chỉ phương := 1)
     u = element.magnetization_direction
 
-    f_seg = np.array([
-        mag * u[0] * np.cos(u[1]), 
-        mag * u[0] * np.sin(u[1]), 
-        mag * u[2]
-    ])
+    # Vector từ hóa của segment (xử lý trong hệ tọa độ trụ):
+    Fseg = np.zeros(3)
+    Fseg[2] = absFseg * u[2]
+    Fseg[1] = absFseg * u[0] * np.sin(u[1])
+    Fseg[0] = absFseg * u[0] * np.cos(u[1])
 
-    ratio = dims[0] / dims[1]
-    f_half = (f_seg * ratio) * 0.5
     
-    return Output(magnet_source=np.array([f_half, f_half]))
 
+    # Tỉ lệ kích thước của element (con) và segment (mẹ)
+    dimension_ratio = element.dimension_ratio
+
+    # Vector từ hóa Element:
+    Fele = Fseg * dimension_ratio
+
+    # Vector từ hóa của từng nhánh
+    F_direc = Fele/2
+    F_direct = np.vstack((F_direc,F_direc))
+
+    return Output(magnet_source = F_direct)
