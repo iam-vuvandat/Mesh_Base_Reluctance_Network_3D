@@ -1,5 +1,11 @@
-import pyvista as pv
 import numpy as np
+import pyvista as pv
+import ctypes
+
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    ctypes.windll.user32.SetProcessDPIAware()
 
 class Geometry:
     def __init__(self, geometry=None):
@@ -12,36 +18,27 @@ class Geometry:
              coil_color="#FF8C00",    
              air_color="#CCEEFF",     
              default_color="#3498DB",
-             highlight_color="#00FF00"): # Màu xanh lá sáng khi chọn
-        """
-        Hiển thị 3D với tính năng tương tác (Click đổi màu, Click lại bỏ chọn).
-        Đã sửa lỗi unhashable type 'PolyData'.
-        """
+             highlight_color="#00FF00"):
+        
         if not self.geometry:
-            print("Geometry is empty. Nothing to show.")
+            print("Geometry is empty.")
             return
 
-        # --- 1. SETUP GIAO DIỆN ---
         if plotter is None:
             pv.set_plot_theme("dark")
             pl = pv.Plotter(window_size=[1200, 900])
             pl.set_background("#0F0F0F") 
             pl.add_axes()
+            try:
+                pl.enable_anti_aliasing('msaa')
+            except: pass
             own_plotter = True
         else:
             pl = plotter
             own_plotter = False
 
-        if own_plotter:
-            print("Rendering high-quality geometry...")
-        
-        # --- TRẠNG THÁI CHỌN (SELECTION STATE) ---
-        # Lưu trữ mesh nào đang được chọn để xử lý logic click lại
-        selection_state = {
-            'last_mesh': None
-        }
+        selection_state = {'last_mesh': None}
 
-        # --- 2. VẼ TỪNG SEGMENT ---
         for segment in self.geometry:
             mesh_data = segment.mesh
             if mesh_data is None: continue
@@ -50,15 +47,12 @@ class Geometry:
                 pv_mesh = pv.wrap(mesh_data)
                 pv_mesh = pv_mesh.clean()
                 pv_mesh = pv_mesh.compute_normals(point_normals=True, 
-                                                  cell_normals=False, 
                                                   split_vertices=True, 
                                                   feature_angle=30.0, 
                                                   inplace=True)
-            except Exception as e:
-                print(f"Error processing mesh: {e}")
+            except:
                 continue
 
-            # Màu sắc
             mat = str(segment.material).lower()
             color = default_color
             opacity = 1.0; pbr = True; metallic = 0.5; roughness = 0.5
@@ -72,7 +66,6 @@ class Geometry:
             elif "air" in mat: 
                 color = air_color; opacity = 0.05; pbr = False
 
-            # Info String
             lines = [f"{'ATTRIBUTE':<22} : {'VALUE'}", "-" * 45]
             attrs = [a for a in dir(segment) if not a.startswith('__') and not callable(getattr(segment, a))]
             priority_keys = ['material', 'index', 'r_length', 't_length', 'z_length']
@@ -95,7 +88,6 @@ class Geometry:
             full_info = "\n".join(lines)
             pv_mesh.field_data["info"] = [full_info]
 
-            # --- ADD MESH & GẮN ACTOR VÀO MESH (FIX LỖI) ---
             actor = pl.add_mesh(pv_mesh, 
                                 color=color, 
                                 opacity=opacity,
@@ -106,27 +98,19 @@ class Geometry:
                                 roughness=roughness,
                                 pickable=True)
             
-            # [FIX LỖI UNHASHABLE]
-            # Thay vì dùng dict, ta gắn trực tiếp Actor và Màu gốc vào object pv_mesh
-            # (Python cho phép gán thuộc tính động cho object)
             pv_mesh._actor_ref = actor
             pv_mesh._original_color = actor.prop.color 
 
-        # --- 3. CALLBACK LOGIC ---
         def on_pick(mesh):
             if mesh is None: return
             
-            # Lấy lại actor từ thuộc tính đã gán (dùng getattr để an toàn)
             actor = getattr(mesh, '_actor_ref', None)
             if actor is None: return
 
             original_color = getattr(mesh, '_original_color', None)
-            
             last_mesh = selection_state['last_mesh']
 
-            # -- CASE 1: Click lại vào chính nó -> Bỏ chọn --
-            if last_mesh is mesh: # So sánh object identity
-                # Trả lại màu gốc
+            if last_mesh is mesh:
                 if original_color:
                     actor.prop.color = original_color
                 
@@ -134,20 +118,15 @@ class Geometry:
                 pl.add_text("Select a segment...", position='upper_left', font_size=10, color='gray', name='hud_info')
                 return
 
-            # -- CASE 2: Click vào cái mới --
-            
-            # Bước A: Trả màu cho cái cũ (nếu có)
             if last_mesh is not None:
                 old_actor = getattr(last_mesh, '_actor_ref', None)
                 old_orig_color = getattr(last_mesh, '_original_color', None)
                 if old_actor and old_orig_color:
                     old_actor.prop.color = old_orig_color
             
-            # Bước B: Highlight cái mới
             actor.prop.color = highlight_color
             selection_state['last_mesh'] = mesh
             
-            # Bước C: Hiện thông tin
             try:
                 if "info" in mesh.field_data:
                     pl.add_text(
@@ -163,7 +142,6 @@ class Geometry:
 
         pl.enable_mesh_picking(on_pick, show=False, show_message=False)
 
-        # --- 4. SHOW ---
         if own_plotter:
             if not pl.renderer.lights:
                 pl.add_text("INTERACTIVE 3D VIEW", position='upper_right', font_size=12, color='gray')

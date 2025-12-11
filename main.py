@@ -14,5 +14,5 @@ else:
     aft.create_reluctance_network()
     workspace.save(aft1 = aft)
 
-#aft.show()
+aft.show()
 aft.reluctance_network.show()
