@@ -1,5 +1,13 @@
 import numpy as np
 import pyvista as pv
+import ctypes # Thư viện quan trọng để fix lỗi mờ trên Windows
+
+# --- 1. FIX LỖI MỜ (HIGH-DPI SCALING) ---
+# Bắt buộc phải có đoạn này trên Surface Pro / Màn hình 2K/4K
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    ctypes.windll.user32.SetProcessDPIAware()
 
 def show_reluctance_network(reluctance_network):
     mesh_obj = reluctance_network.mesh
@@ -23,13 +31,18 @@ def show_reluctance_network(reluctance_network):
     grid_pv.cell_data["MatID"] = mat_ids
 
     pv.set_plot_theme("dark")
+    
+    # Window size lớn để tận dụng màn hình 2K
     pl = pv.Plotter(window_size=[2560, 1440]) 
     pl.set_background("#050505") 
     pl.add_axes()
     
+    # --- 2. KHỬ RĂNG CƯA CHUYÊN DỤNG (MSAA) ---
+    # MSAA (Multi-Sample) tốt hơn SSAA cho các đường Wireframe
     try:
-        pl.enable_anti_aliasing('ssaa')
-    except: pass
+        pl.enable_anti_aliasing('msaa', multi_samples=8)
+    except: 
+        pass
 
     styles = {
         0: ("Air",    "#333333", 0.4), 
@@ -38,13 +51,17 @@ def show_reluctance_network(reluctance_network):
         3: ("Coil",   "#FFAA00", 0.9)  
     }
 
+    # --- 3. TĂNG ĐỘ DÀY NÉT VẼ (LINE WIDTH) ---
+    # Trên màn 2K, line_width=1 nhìn rất mảnh và gai. Tăng lên 2.0 sẽ mượt hơn.
+    line_w = 2.0 
+
     for mat_id, (label, color, opacity) in styles.items():
         sub_mesh = grid_pv.threshold([mat_id, mat_id], scalars="MatID", preference="cell")
         if sub_mesh.n_cells > 0:
             edge_color = "#222222" if mat_id == 0 else "#555555"
             pl.add_mesh(sub_mesh, color=color, opacity=opacity, 
                         show_edges=True, edge_color=edge_color, label=label,
-                        pickable=True)
+                        pickable=True, line_width=line_w)
 
     instructions = "CONTROLS\nw / s : Radius\nd / a : Theta\nr / f : Axial\nt     : Toggle Text"
     pl.add_text(instructions, position='upper_right', font_size=10, color='white', font='courier')
@@ -68,8 +85,9 @@ def show_reluctance_network(reluctance_network):
             
             try:
                 cell_geo = grid_pv.extract_cells([flat_id])
+                # Highlight cũng tăng độ dày lên 5
                 self.highlight_actor = pl.add_mesh(cell_geo, style='wireframe', color='#00FFFF', 
-                                                    line_width=4, render=False, name="highlight")
+                                                    line_width=5, render=False, name="highlight")
             except: pass
 
             if self.info_actor:
