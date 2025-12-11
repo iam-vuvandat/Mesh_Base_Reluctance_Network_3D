@@ -2,7 +2,7 @@ from core_class.utils.find_vacuum_reluctance import find_vacuum_reluctance
 from core_class.utils.extract_element_info import extract_element_info
 from core_class.utils.find_element_dimension import find_element_dimension
 from core_class.utils.find_minimum_reluctance import find_minimum_reluctance
-
+from core_class.utils.find_magnet_source import find_magnet_source
 
 class Element:
     def __init__(self,
@@ -12,7 +12,12 @@ class Element:
                  mesh = None,
                  magnetic_potential = None,
                  winding_current = None):
-        
+        """
+        Đối với các mảng (2x3) chứa nhiều thông tin, vị trí tương ứng:
+        [     r_in    t_left     z_bot
+              r_out   t_right    z_top    ]
+        """
+
         self.position = position
         self.material_database = motor.material_database
         self.magnetic_potential = magnetic_potential
@@ -34,6 +39,7 @@ class Element:
         # magnet properties
         self.segment_magnet_source = info.magnet_source
         self.magnetization_direction = info.magnetization_direction
+        self.magnet_source = find_magnet_source(element= self).magnet_source
 
         # winding properties
         self.segment_winding_vector = info.winding_vector
