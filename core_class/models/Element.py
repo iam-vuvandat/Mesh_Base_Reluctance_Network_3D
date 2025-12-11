@@ -3,6 +3,7 @@ from core_class.utils.extract_element_info import extract_element_info
 from core_class.utils.find_element_dimension import find_element_dimension
 from core_class.utils.find_minimum_reluctance import find_minimum_reluctance
 
+
 class Element:
     def __init__(self,
                  motor = None,
