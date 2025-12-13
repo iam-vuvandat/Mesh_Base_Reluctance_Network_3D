@@ -12,9 +12,9 @@ def create_elements(motor, debug=True):
     elements = np.empty((nr, nt, nz), dtype=object, order='F')
     
     if debug:
-        print(f"[INFO] Creating {total_elements} elements...")
+        print(f"[INFO] Initializing {total_elements} elements...")
 
-    with tqdm(total=total_elements, desc="Initializing Elements", disable=not debug) as pbar:
+    with tqdm(total=total_elements, desc="Creating Objects", disable=not debug) as pbar:
         for i_z in range(nz):
             for i_t in range(nt):
                 for i_r in range(nr):
@@ -29,7 +29,11 @@ def create_elements(motor, debug=True):
                         winding_current=motor.winding_current,
                         elements=elements
                     )
+                    pbar.update(1)
             
-            pbar.update(nr * nt)
+
+    iterator = tqdm(elements.flat, total=total_elements, desc="Linking Neighbors", disable=not debug)
+    
+    
 
     return elements

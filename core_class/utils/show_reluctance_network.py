@@ -1,5 +1,8 @@
 import numpy as np
 import pyvista as pv
+from pyvistaqt import BackgroundPlotter
+from PyQt5.QtWidgets import QDockWidget, QTextEdit, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt
 import ctypes
 
 try:
@@ -28,14 +31,22 @@ def show_reluctance_network(reluctance_network):
     
     grid_pv.cell_data["MatID"] = mat_ids
 
-    pv.set_plot_theme("dark")
-    pl = pv.Plotter(window_size=[2560, 1440]) 
-    pl.set_background("#050505") 
+    pl = BackgroundPlotter(title="Reluctance Network Viewer", window_size=(1600, 900))
+    pl.set_background("#050505")
     pl.add_axes()
+
+    dock = QDockWidget("Element Info", pl.app_window)
+    dock_widget = QWidget()
+    layout = QVBoxLayout()
     
-    try:
-        pl.enable_anti_aliasing('msaa', multi_samples=8)
-    except: pass
+    text_info = QTextEdit()
+    text_info.setReadOnly(True)
+    text_info.setStyleSheet("background-color: #1E1E1E; color: white; font-family: Consolas; font-size: 28px;")
+    
+    layout.addWidget(text_info)
+    dock_widget.setLayout(layout)
+    dock.setWidget(dock_widget)
+    pl.app_window.addDockWidget(Qt.RightDockWidgetArea, dock)
 
     styles = {
         0: ("Air",    "#58A5EC", 0.4), 
@@ -44,15 +55,13 @@ def show_reluctance_network(reluctance_network):
         3: ("Coil",   "#FFAA00", 0.8)  
     }
 
-    line_w = 2.0 
-
     for mat_id, (label, color, opacity) in styles.items():
         sub_mesh = grid_pv.threshold([mat_id, mat_id], scalars="MatID", preference="cell")
         if sub_mesh.n_cells > 0:
             edge_color = "#222222" if mat_id == 0 else "#555555"
             pl.add_mesh(sub_mesh, color=color, opacity=opacity, 
                         show_edges=True, edge_color=edge_color, label=label,
-                        pickable=True, line_width=line_w)
+                        pickable=True, line_width=2.0)
 
     pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.10, 0.10), loc='lower right', face='rectangle')
 
@@ -60,8 +69,6 @@ def show_reluctance_network(reluctance_network):
         def __init__(self):
             self.selected_idx = (0, 0, 0)
             self.highlight_actor = None 
-            self.info_actor = None 
-            self.show_text = True 
 
         def update_selection(self, ir, it, iz):
             self.selected_idx = (ir, it, iz)
@@ -76,86 +83,45 @@ def show_reluctance_network(reluctance_network):
                                                    line_width=5, render=False, name="highlight")
             except: pass
 
-            if self.info_actor:
-                pl.remove_actor(self.info_actor)
-
-            if not self.show_text:
-                pl.render()
-                return
-
             element_obj = elements_matrix[ir, it, iz]
             
-            info_str = f"SELECTED ELEMENT\nIdx: [{ir}, {it}, {iz}] | ID: {flat_id}\n" + "="*30 + "\n\n"
+            info_str = f"=== SELECTED ELEMENT ===\n"
+            info_str += f"Index (3D): [{ir}, {it}, {iz}]\n"
+            info_str += f"Flat ID   : {flat_id}\n"
+            info_str += "="*30 + "\n"
             
             if element_obj is None:
-                info_str += "Status: Empty"
+                info_str += "Status: Empty / None"
             else:
                 attrs = vars(element_obj)
                 for key, val in attrs.items():
-                    if key == "dimension" and isinstance(val, np.ndarray):
-                        info_str += "Dimension (2x3) [r, theta, z]:\n"
-                        try:
-                            info_str += f"  El : [{val[0,0]:.6f}, {val[0,1]:.6f}, {val[0,2]:.6f}]\n"
-                            info_str += f"  Seg: [{val[1,0]:.6f}, {val[1,1]:.6f}, {val[1,2]:.6f}]"
-                        except: info_str += str(val)
+                    if key.startswith("__"): continue
                     
-                    elif key == "coordinate" and isinstance(val, np.ndarray):
-                        info_str += "Coordinate (2x3) [r, theta, z]:\n"
-                        try:
-                            info_str += f"  Start: [{val[0,0]:.6f}, {val[0,1]:.6f}, {val[0,2]:.6f}]\n"
-                            info_str += f"  End  : [{val[1,0]:.6f}, {val[1,1]:.6f}, {val[1,2]:.6f}]"
-                        except: info_str += str(val)
+                    info_str += f"\n[ {key} ]\n"
                     
-                    elif isinstance(val, float): 
-                        info_str += f"{key}: {val:.6f}"
-                    
-                    elif isinstance(val, np.ndarray):
-                        with np.printoptions(formatter={'float': '{: 0.6f}'.format}, threshold=1000, linewidth=60):
-                            arr_str = np.array2string(val.flatten(), separator=', ')
-                        info_str += f"{key}:\n{arr_str}"
+                    if isinstance(val, np.ndarray):
+                        with np.printoptions(formatter={'float': '{: 0.6f}'.format}, threshold=1000, linewidth=80):
+                            arr_str = np.array2string(val, separator=', ')
+                            info_str += f"{arr_str}\n"
+                    elif isinstance(val, float):
+                        info_str += f"{val:.9f}\n"
+                    elif key in ['mesh', 'motor', 'geometry']:
+                        info_str += f"<Reference to {type(val).__name__}>\n"
+                    else:
+                        info_str += f"{val}\n"
 
-                    elif key in ['mesh', 'motor', 'geometry']: 
-                        info_str += f"{key}: <Ref Object>"
-                    
-                    else: 
-                        info_str += f"{key}: {val}"
-                    
-                    info_str += "\n"
-            
-            self.info_actor = pl.add_text(info_str, position='upper_left', font_size=20, 
-                                          color='white', font='courier', name='hud_info')
-            pl.render()
-
-        def toggle_text(self, flag):
-            self.show_text = flag
-            if not self.show_text:
-                if self.info_actor:
-                    pl.remove_actor(self.info_actor)
-                pl.render()
-            else:
-                self.update_selection(*self.selected_idx)
+            text_info.setText(info_str)
 
         def move_cursor(self, dr, dt, dz):
             r, t, z = self.selected_idx
-            
             r += dr
             t += dt
             z += dz
 
-            while r >= nr:
-                r -= nr
-                t += 1
-            while r < 0:
-                r += nr
-                t -= 1
-
-            while t >= nt:
-                t -= nt
-                z += 1
-            while t < 0:
-                t += nt
-                z -= 1
-
+            while r >= nr: r -= nr; t += 1
+            while r < 0:   r += nr; t -= 1
+            while t >= nt: t -= nt; z += 1
+            while t < 0:   t += nt; z -= 1
             z = z % nz 
 
             self.update_selection(r, t, z)
@@ -183,43 +149,40 @@ def show_reluctance_network(reluctance_network):
                            show_message=False, through=False, use_hardware=False)
 
     btn_size = 80
-    gap = 20
-    x_right = 2560 - 120
-    x_left = x_right - (btn_size + gap)
-    y_start = 1300 
+    gap = 10
     
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, 1), position=(x_right, y_start), 
+    x_col1 = 20
+    x_col2 = x_col1 + btn_size + gap
+    
+    y_row1 = pl.window_size[1] - 120
+    y_row2 = y_row1 - (btn_size + gap)
+    y_row3 = y_row2 - (btn_size + gap)
+    
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, 1), position=(x_col2, y_row1), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("k++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("k++", position=(x_col2 + 25, y_row1 + 25), font_size=14, color='white')
 
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, -1), position=(x_left, y_start), 
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, -1), position=(x_col1, y_row1), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("k--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("k--", position=(x_col1 + 25, y_row1 + 25), font_size=14, color='white')
 
-    y_start -= (btn_size + gap)
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 1, 0), position=(x_right, y_start), 
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 1, 0), position=(x_col2, y_row2), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("i++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("j++", position=(x_col2 + 25, y_row2 + 25), font_size=14, color='white')
 
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, -1, 0), position=(x_left, y_start), 
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, -1, 0), position=(x_col1, y_row2), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("j--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("j--", position=(x_col1 + 25, y_row2 + 25), font_size=14, color='white')
 
-    y_start -= (btn_size + gap)
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(1, 0, 0), position=(x_right, y_start), 
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(1, 0, 0), position=(x_col2, y_row3), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("i++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("i++", position=(x_col2 + 25, y_row3 + 25), font_size=14, color='white')
 
-    pl.add_checkbox_button_widget(lambda v: state.move_cursor(-1, 0, 0), position=(x_left, y_start), 
+    pl.add_checkbox_button_widget(lambda v: state.move_cursor(-1, 0, 0), position=(x_col1, y_row3), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("i--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
-
-    y_start -= (btn_size + gap * 2)
-    pl.add_checkbox_button_widget(state.toggle_text, value=True, position=(x_left, y_start), 
-                                  size=btn_size, color_on='green', color_off='grey')
-    pl.add_text("Info", position=(x_left + 20, y_start + 25), font_size=14, color='white')
+    pl.add_text("i--", position=(x_col1 + 25, y_row3 + 25), font_size=14, color='white')
 
     state.update_selection(0, 0, 0)
     
-    pl.view_isometric()
     pl.show()
+    pl.app.exec_()

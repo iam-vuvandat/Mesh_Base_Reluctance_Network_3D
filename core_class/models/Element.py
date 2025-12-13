@@ -7,7 +7,8 @@ from core_class.utils.find_element_segment_dimension_ratio import find_element_s
 from core_class.utils.find_winding_source import find_winding_source
 from core_class.utils.find_total_magnetic_source import find_total_magnetic_source
 from core_class.utils.find_flux_direct import find_flux_direct
-from core_class.utils.get_neighbor_elements import get_neighbor_elements
+from core_class.utils.get_neighbor_elements_position import get_neighbor_elements_position
+from core_class.utils.find_neighbor_elements import find_neighbor_elements
 
 class Element:
       def __init__(self,
@@ -25,6 +26,7 @@ class Element:
             """
 
             self.position = position
+            self.mesh = mesh
             self.material_database = motor.material_database
             self.magnetic_potential = magnetic_potential
             self.winding_current = winding_current
@@ -77,19 +79,19 @@ class Element:
             self.reluctance = self.minimum_reluctance
             self.flux_direct = None
             self.flux_density = None
-            self.neighbor_elements = None
+            self.neighbor_elements_position = get_neighbor_elements_position(element=self).neighbor_elements_position
 
-      def get_neighbor_elements(self):
-            self.get_neighbor_elements = get_neighbor_elements(element=self).neighbor_elements
-      
+      def neighbor_elements(self):
+            return find_neighbor_elements(element=self).neighbor_elements
+
       def update_element(self,
                         magnetic_potential = None,
                         winding_current = None):
             
             if winding_current is not None:
                   self.winding_current = winding_current
-                  self.winding_current = find_winding_source(element=self)
-                  self.magnetic_source = find_total_magnetic_source(element= self)
+                  self.winding_source = find_winding_source(element=self).winding_source
+                  self.magnetic_source = find_total_magnetic_source(element= self).total_magnetic_source
 
             if magnetic_potential is not None:
                   # find flux direct

@@ -10,7 +10,7 @@ def find_flux_direct(element):
     magnetic_potential = element.magnetic_potential
     i,j,k = element.position
     flux_direct = np.zeros((2,3))
-    neighbor_elements = element.neighbor_elements
+    neighbor_elements = element.neighbor_elements()
     
     
 

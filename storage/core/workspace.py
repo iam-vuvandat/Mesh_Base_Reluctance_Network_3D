@@ -1,5 +1,6 @@
 import os
 import pickle
+import sys 
 
 # Tên file dữ liệu (nằm cùng thư mục với file script này)
 DATA_FILE_NAME = "workspace.pkl"
@@ -19,6 +20,7 @@ def save(**kwargs):
     Lưu biến vào workspace.pkl
     Ví dụ: workspace.save(x=10, data=[1,2])
     """
+    sys.setrecursionlimit(1000000000)
     filepath = _get_data_path()
     data = {}
     

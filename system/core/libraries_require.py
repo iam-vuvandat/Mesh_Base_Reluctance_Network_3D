@@ -19,7 +19,9 @@ def install_library():
         'pympler': 'pympler',
         'win32com.client': 'pywin32',
         'ansys.motorcad.core': 'ansys-motorcad-core',
-        'pyamg': 'pyamg'
+        'pyamg': 'pyamg',
+        'pyvistaqt': 'pyvistaqt',
+        'PyQt5': 'PyQt5'
     }
 
     installed_modules = []
@@ -42,4 +44,5 @@ def install_library():
     print("\nAll library checks completed.")
     return installed_modules
 
-install_library()
+if __name__ == "__main__":
+    install_library()
