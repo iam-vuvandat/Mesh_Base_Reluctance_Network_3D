@@ -38,10 +38,10 @@ def show_reluctance_network(reluctance_network):
     except: pass
 
     styles = {
-        0: ("Air",    "#333333", 0.4), 
-        1: ("Iron",   "#F0F0F0", 0.9), 
-        2: ("Magnet", "#FF3333", 0.9), 
-        3: ("Coil",   "#FFAA00", 0.9)  
+        0: ("Air",    "#58A5EC", 0.4), 
+        1: ("Iron",   "#F0F0F0", 0.8), 
+        2: ("Magnet", "#52FA55", 0.8), 
+        3: ("Coil",   "#FFAA00", 0.8)  
     }
 
     line_w = 2.0 
@@ -190,34 +190,34 @@ def show_reluctance_network(reluctance_network):
     
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, 1), position=(x_right, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("Z+", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("k++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
 
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 0, -1), position=(x_left, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("Z-", position=(x_left + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("k--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
 
     y_start -= (btn_size + gap)
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, 1, 0), position=(x_right, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("T+", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("i++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
 
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(0, -1, 0), position=(x_left, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("T-", position=(x_left + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("j--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
 
     y_start -= (btn_size + gap)
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(1, 0, 0), position=(x_right, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("R+", position=(x_right + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("i++", position=(x_right + 25, y_start + 25), font_size=14, color='white')
 
     pl.add_checkbox_button_widget(lambda v: state.move_cursor(-1, 0, 0), position=(x_left, y_start), 
                                   size=btn_size, color_on='grey', color_off='grey')
-    pl.add_text("R-", position=(x_left + 25, y_start + 25), font_size=14, color='white')
+    pl.add_text("i--", position=(x_left + 25, y_start + 25), font_size=14, color='white')
 
     y_start -= (btn_size + gap * 2)
     pl.add_checkbox_button_widget(state.toggle_text, value=True, position=(x_left, y_start), 
                                   size=btn_size, color_on='green', color_off='grey')
-    pl.add_text("INFO", position=(x_left + 20, y_start + 25), font_size=14, color='white')
+    pl.add_text("Info", position=(x_left + 20, y_start + 25), font_size=14, color='white')
 
     state.update_selection(0, 0, 0)
     

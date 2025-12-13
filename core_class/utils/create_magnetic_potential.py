@@ -9,7 +9,7 @@ def create_magnetic_potential(reluctance_network):
         number_of_element_t = reluctance_network.mesh.nt
         number_of_element_z = reluctance_network.mesh.nz
         
-        data = np.zeros((number_of_element_r,number_of_element_t,number_of_element_z))
+        data = np.zeros((number_of_element_r,number_of_element_t,number_of_element_z),order='F')
 
     return MagneticPotential(data= data,
                              periodic_boundary = periodic_boundary)
