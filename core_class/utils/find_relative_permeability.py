@@ -15,7 +15,7 @@ def find_relative_permeability(element):
         for i in range(2):
             for j in range(3):
                 relative_permeability[i,j] = lookup_BH_curve(B_input= element.flux_density_direct[i,j],
-                                                        material_database= material_database)
+                                                        material_database= material_database).mu_r
                 
     else:
         if element.material == "magnet":

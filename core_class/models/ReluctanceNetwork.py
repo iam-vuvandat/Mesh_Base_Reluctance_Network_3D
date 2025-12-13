@@ -4,6 +4,7 @@ from core_class.utils.show_reluctance_network import show_reluctance_network
 from core_class.utils.create_magnetic_potential import create_magnetic_potential
 from core_class.utils.create_winding_current import create_winding_current
 from core_class.utils.update_reluctance_network import update_reluctance_network
+from core_class.utils.set_minimum_reluctance import set_minimum_reluctance
 
 class ReluctanceNetwork:
     def __init__(self,
@@ -33,7 +34,8 @@ class ReluctanceNetwork:
                                   magnetic_potential = magnetic_potential,
                                   winding_current = winding_current)
 
-
+    def set_minimum_reluctance(self):
+        set_minimum_reluctance(reluctance_network=self)
 
 
 
