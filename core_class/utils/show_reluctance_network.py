@@ -24,11 +24,24 @@ def show_reluctance_network(reluctance_network):
     for idx, el in enumerate(flat_elements):
         if el is None: continue
         mat_name = str(el.material).lower()
-        if "iron" in mat_name or "steel" in mat_name: mat_ids[idx] = 1
-        elif "magnet" in mat_name:                    mat_ids[idx] = 2
-        elif "coil" in mat_name or "winding" in mat_name: mat_ids[idx] = 3
-        else:                                             mat_ids[idx] = 0
-    
+        
+        if "iron" in mat_name or "steel" in mat_name:
+            mat_ids[idx] = 1
+        elif "magnet" in mat_name:
+            vec = getattr(el, 'magnetization_direction', None)
+            z_val = vec[-1] if (vec is not None and len(vec) > 0) else 0
+            
+            if z_val > 0:
+                mat_ids[idx] = 2 
+            elif z_val < 0:
+                mat_ids[idx] = 4 
+            else:
+                mat_ids[idx] = 2
+        elif "coil" in mat_name or "winding" in mat_name:
+            mat_ids[idx] = 3
+        else:
+            mat_ids[idx] = 0
+            
     grid_pv.cell_data["MatID"] = mat_ids
 
     pl = BackgroundPlotter(title="Reluctance Network Viewer", window_size=(1600, 900))
@@ -49,10 +62,11 @@ def show_reluctance_network(reluctance_network):
     pl.app_window.addDockWidget(Qt.RightDockWidgetArea, dock)
 
     styles = {
-        0: ("Air",    "#58A5EC", 0.4), 
-        1: ("Iron",   "#F0F0F0", 0.8), 
-        2: ("Magnet", "#52FA55", 0.8), 
-        3: ("Coil",   "#FFAA00", 0.8)  
+        0: ("Default/Air", "#AAAAAA", 0.3),
+        1: ("Iron",        "#F0F0F0", 0.8),
+        2: ("Magnet N",    "#FF0000", 0.9),
+        3: ("Coil",        "#FFAA00", 0.8),
+        4: ("Magnet S",    "#0000FF", 0.9)
     }
 
     for mat_id, (label, color, opacity) in styles.items():
@@ -63,7 +77,7 @@ def show_reluctance_network(reluctance_network):
                         show_edges=True, edge_color=edge_color, label=label,
                         pickable=True, line_width=2.0)
 
-    pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.10, 0.10), loc='lower right', face='rectangle')
+    pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.12, 0.15), loc='lower right', face='rectangle')
 
     class ViewerState:
         def __init__(self):

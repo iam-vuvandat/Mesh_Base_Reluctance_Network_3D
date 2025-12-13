@@ -2,7 +2,7 @@ from system.core import libraries_require
 from motor_type.models.AxialFluxMotorType1 import AxialFluxMotorType1
 from storage.core import workspace
 
-re_create_motor = True
+re_create_motor = False
 
 if re_create_motor == False:
     aft = workspace.load("aft1")
@@ -11,7 +11,7 @@ else:
     aft.create_geometry()
     aft.create_adaptive_mesh()
     aft.create_reluctance_network()
-    #workspace.save(aft1 = aft)
+    workspace.save(aft1 = aft)
 
 #aft.show()
 aft.reluctance_network.update_reluctance_network(magnetic_potential= aft.reluctance_network.magnetic_potential)

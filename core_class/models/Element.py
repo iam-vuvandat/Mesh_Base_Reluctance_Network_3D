@@ -10,6 +10,9 @@ from core_class.utils.find_flux_direct import find_flux_direct
 from core_class.utils.get_neighbor_elements_position import get_neighbor_elements_position
 from core_class.utils.find_neighbor_elements import find_neighbor_elements
 from core_class.utils.find_flux_density import find_flux_density
+from core_class.utils.find_relative_permeability import find_relative_permeability
+from core_class.utils.find_reluctance_updated import find_reluctance_updated
+
 
 class Element:
       def __init__(self,
@@ -81,6 +84,7 @@ class Element:
             self.flux_direct = None
             self.flux_density_direct = None
             self.flux_density_average = None
+            self.relative_permeability = None
             self.neighbor_elements_position = get_neighbor_elements_position(element=self).neighbor_elements_position
 
       def neighbor_elements(self):
@@ -105,7 +109,10 @@ class Element:
                   self.flux_density_average = flux_density.flux_density_average
                   
                   # find mu
-
+                  self.relative_permeability = find_relative_permeability(element=self).relative_permeability
+                  
                   # update reluctance
+                  self.reluctance = find_reluctance_updated(element= self).reluctance
 
-                  pass
+      def set_reluctance_minimum(self):
+            self.reluctance = self.minimum_reluctance.copy()
