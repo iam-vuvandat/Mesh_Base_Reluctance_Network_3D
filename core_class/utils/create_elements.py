@@ -30,10 +30,5 @@ def create_elements(motor, debug=True):
                         elements=elements
                     )
                     pbar.update(1)
-            
-
-    iterator = tqdm(elements.flat, total=total_elements, desc="Linking Neighbors", disable=not debug)
-    
-    
 
     return elements

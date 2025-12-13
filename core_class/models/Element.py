@@ -9,6 +9,7 @@ from core_class.utils.find_total_magnetic_source import find_total_magnetic_sour
 from core_class.utils.find_flux_direct import find_flux_direct
 from core_class.utils.get_neighbor_elements_position import get_neighbor_elements_position
 from core_class.utils.find_neighbor_elements import find_neighbor_elements
+from core_class.utils.find_flux_density import find_flux_density
 
 class Element:
       def __init__(self,
@@ -78,7 +79,8 @@ class Element:
             # initialization for the first time
             self.reluctance = self.minimum_reluctance
             self.flux_direct = None
-            self.flux_density = None
+            self.flux_density_direct = None
+            self.flux_density_average = None
             self.neighbor_elements_position = get_neighbor_elements_position(element=self).neighbor_elements_position
 
       def neighbor_elements(self):
@@ -98,7 +100,10 @@ class Element:
                   self.flux_direct = find_flux_direct(element= self).flux_direct
 
                   # find flux density
-
+                  flux_density = find_flux_density(element=self)
+                  self.flux_density_direct = flux_density.flux_density_direct
+                  self.flux_density_average = flux_density.flux_density_average
+                  
                   # find mu
 
                   # update reluctance
