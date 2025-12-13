@@ -7,6 +7,7 @@ from core_class.utils.find_element_segment_dimension_ratio import find_element_s
 from core_class.utils.find_winding_source import find_winding_source
 from core_class.utils.find_total_magnetic_source import find_total_magnetic_source
 from core_class.utils.find_flux_direct import find_flux_direct
+from core_class.utils.get_neighbor_elements import get_neighbor_elements
 
 class Element:
       def __init__(self,
@@ -15,7 +16,8 @@ class Element:
                  geometry = None,
                  mesh = None,
                  magnetic_potential = None,
-                 winding_current = None):
+                 winding_current = None,
+                 elements = None):
             """
             Đối với các mảng (2x3) chứa nhiều thông tin, vị trí tương ứng:
             [     r_in    t_left     z_bot
@@ -26,6 +28,7 @@ class Element:
             self.material_database = motor.material_database
             self.magnetic_potential = magnetic_potential
             self.winding_current = winding_current
+            self.elements = elements
 
             info = extract_element_info(position=position,
                                     geometry=geometry,
@@ -74,7 +77,11 @@ class Element:
             self.reluctance = self.minimum_reluctance
             self.flux_direct = None
             self.flux_density = None
-            
+            self.neighbor_elements = None
+
+      def get_neighbor_elements(self):
+            self.get_neighbor_elements = get_neighbor_elements(element=self).neighbor_elements
+      
       def update_element(self,
                         magnetic_potential = None,
                         winding_current = None):
@@ -89,7 +96,7 @@ class Element:
                   self.flux_direct = find_flux_direct(element= self).flux_direct
 
                   # find flux density
-                  
+
                   # find mu
 
                   # update reluctance
