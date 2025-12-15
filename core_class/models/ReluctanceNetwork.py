@@ -4,6 +4,9 @@ from core_class.utils.show_reluctance_network import show_reluctance_network
 from core_class.utils.create_magnetic_potential import create_magnetic_potential
 from core_class.utils.create_winding_current import create_winding_current
 from core_class.utils.update_reluctance_network import update_reluctance_network
+from core_class.utils.set_minimum_reluctance import set_minimum_reluctance
+from solver.core.create_magnetic_potential_equation import create_magnetic_potential_equation
+from solver.core.solve_magnetic_equation import solve_magnetic_equation
 
 class ReluctanceNetwork:
     def __init__(self,
@@ -33,9 +36,24 @@ class ReluctanceNetwork:
                                   magnetic_potential = magnetic_potential,
                                   winding_current = winding_current)
 
+    def set_minimum_reluctance(self):
+        set_minimum_reluctance(reluctance_network=self)
 
+    def create_magnetic_potential_equation(self,
+                                           use_minimum_reluctance = False):
+        return create_magnetic_potential_equation(reluctance_network= self,
+                                                  use_minimum_reluctance= use_minimum_reluctance)
 
-
+    def solve_magnetic_equation(self,
+                                max_iteration = 3,
+                                max_relative_residual = 0.05,
+                                damping_factor = 0.013,
+                                debug = True):
+        solve_magnetic_equation(reluctance_network = self,
+                                max_iteration = max_iteration,
+                                max_relative_residual = max_relative_residual,
+                                damping_factor = damping_factor,
+                                debug = debug)
 
 
 

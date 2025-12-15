@@ -30,7 +30,7 @@ class AxialFluxMotorType1:
                  shaft_hole_diameter = 50 * 1e-3,
                  # linear_stator_parameter 
                  slot_width = 7 * 1e-3,
-                 slot_depth = 20 * 1e-3,
+                 slot_depth = 15 * 1e-3,
                  slot_corner_radius = 0, # deg
                  tooth_tip_depth = 2 * 1e-3,
                  tooth_tip_angle = 30, # deg
@@ -127,21 +127,21 @@ class AxialFluxMotorType1:
                                         create_stator_yoke=create_stator_yoke)
 
     def create_adaptive_mesh(self,
-                         n_r_in=4,
-                         n_r_1=4,
-                         n_r_2=7,
-                         n_r_3=4,
-                         n_r_out=2,
+                         n_r_in=5,
+                         n_r_1=5,
+                         n_r_2=10,
+                         n_r_3=5,
+                         n_r_out=5,
                          n_theta=120,
                          n_z_in_air=3,
-                         n_z_rotor_yoke=3,
-                         n_z_magnet=3,
-                         n_z_airgap=3,
-                         n_z_tooth_tip_1=3,
-                         n_z_tooth_tip_2=3,
-                         n_z_tooth_body=7,
-                         n_z_stator_yoke=3,
-                         n_z_out_air=3,
+                         n_z_rotor_yoke=6,
+                         n_z_magnet=5,
+                         n_z_airgap=5,
+                         n_z_tooth_tip_1=5,
+                         n_z_tooth_tip_2=5,
+                         n_z_tooth_body=9,
+                         n_z_stator_yoke=5,
+                         n_z_out_air = 3,
                          use_symmetry_factor=True,
                          periodic_boundary=True):
         """
