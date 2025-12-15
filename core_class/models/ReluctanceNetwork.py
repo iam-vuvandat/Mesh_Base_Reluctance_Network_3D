@@ -45,9 +45,9 @@ class ReluctanceNetwork:
                                                   use_minimum_reluctance= use_minimum_reluctance)
 
     def solve_magnetic_equation(self,
-                                max_iteration = 3,
-                                max_relative_residual = 0.05,
-                                damping_factor = 0.013,
+                                max_iteration =1,
+                                max_relative_residual = 0.00001,
+                                damping_factor = 0.00005,
                                 debug = True):
         solve_magnetic_equation(reluctance_network = self,
                                 max_iteration = max_iteration,

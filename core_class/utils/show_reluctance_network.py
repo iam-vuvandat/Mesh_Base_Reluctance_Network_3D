@@ -88,12 +88,19 @@ def show_reluctance_network(reluctance_network):
 
     current_actors = []
     
-    def render_view(is_bmap_mode, is_transparent):
+    def render_view(is_bmap_mode, is_trans_checked):
         for actor in current_actors:
             pl.remove_actor(actor)
         current_actors.clear()
 
+        # Xác định độ trong suốt dựa trên nút bấm (theo yêu cầu của bạn)
+        # Bật (Checked) = 1.0 (Đặc), Tắt (Unchecked) = 0.5 (Trong suốt)
+        solid_opacity = 1.0 if is_trans_checked else 0.5
+        air_opacity = 0.3  # Giữ cố định 0.3 cho không khí như bạn yêu cầu
+
         if is_bmap_mode:
+            # --- Chế độ B-Map ---
+            # Phần vật liệu rắn (Iron, Magnet...)
             active_mesh = grid_pv.threshold(0.1, scalars="MatID", preference="cell")
             if active_mesh.n_cells > 0:
                 actor_active = pl.add_mesh(
@@ -101,12 +108,13 @@ def show_reluctance_network(reluctance_network):
                     scalars="FluxB", 
                     cmap="jet", 
                     clim=[0, 2.0],
-                    opacity=0.5, 
+                    opacity=solid_opacity,  # <--- Đã sửa: dùng biến thay vì số cứng 0.5
                     show_edges=False,
                     scalar_bar_args={'title': "Flux Density (T)", 'color': 'white'}
                 )
                 current_actors.append(actor_active)
 
+            # Phần không khí
             air_mesh = grid_pv.threshold([0, 0], scalars="MatID", preference="cell")
             if air_mesh.n_cells > 0:
                 actor_air = pl.add_mesh(
@@ -114,25 +122,29 @@ def show_reluctance_network(reluctance_network):
                     scalars="FluxB",
                     cmap="jet",
                     clim=[0, 2.0],
-                    opacity=0.1,
+                    opacity=air_opacity, # <--- Đã sửa: dùng biến 0.3
                     show_edges=False,
                     show_scalar_bar=False
                 )
                 current_actors.append(actor_air)
                 
         else:
-            for mat_id, (label, color, def_opacity) in styles.items():
+            # --- Chế độ Material ---
+            for mat_id, (label, color, _) in styles.items():
                 sub_mesh = grid_pv.threshold([mat_id, mat_id], scalars="MatID", preference="cell")
                 if sub_mesh.n_cells > 0:
-                    style = 'surface'
                     edge_color = "#222222" if mat_id == 0 else "#555555"
+                    style = 'surface'
                     
-                    if is_transparent:
-                        current_opacity = def_opacity if mat_id == 0 else 0.3
-                        show_edges = False if mat_id != 0 else False
+                    if mat_id == 0:
+                        # Vật liệu là khí (Air)
+                        current_opacity = air_opacity
+                        show_edges = False
                     else:
-                        current_opacity = def_opacity
-                        show_edges = True
+                        # Vật liệu rắn (Iron, Magnet, Coil...)
+                        current_opacity = solid_opacity
+                        # Nếu đặc hoàn toàn (1.0) thì hiện cạnh, nếu trong suốt (0.5) thì ẩn cạnh cho đẹp
+                        show_edges = True if is_trans_checked else False
 
                     actor = pl.add_mesh(
                         sub_mesh, 
@@ -148,22 +160,22 @@ def show_reluctance_network(reluctance_network):
             
             if not is_bmap_mode:
                 pl.add_legend(bcolor='#1A1A1A', border=True, size=(0.12, 0.15), loc='lower right', face='rectangle')
-
+    
     class ViewerState:
         def __init__(self):
             self.selected_idx = (0, 0, 0)
             self.highlight_actor = None 
             self.bmap_mode = False
-            self.transparent_mode = False
+            self.trans_checked = False
 
         def toggle_mode(self, state):
             self.bmap_mode = state
-            render_view(self.bmap_mode, self.transparent_mode)
+            render_view(self.bmap_mode, self.trans_checked)
             self.update_selection(*self.selected_idx)
 
         def toggle_transparency(self, state):
-            self.transparent_mode = state
-            render_view(self.bmap_mode, self.transparent_mode)
+            self.trans_checked = state
+            render_view(self.bmap_mode, self.trans_checked)
             self.update_selection(*self.selected_idx)
 
         def update_selection(self, ir, it, iz):

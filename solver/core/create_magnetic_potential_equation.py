@@ -23,7 +23,7 @@ def create_magnetic_potential_equation(reluctance_network,
 
     iterator = range(matrix_size)
     if debug:
-        iterator = tqdm(iterator, desc="Processing Elements")
+        iterator = tqdm(iterator, desc="Creating Matrix Equation")
 
     for i_th in iterator:
         elements = reluctance_network.elements
